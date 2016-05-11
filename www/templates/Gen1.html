@@ -1,0 +1,9 @@
+<ion-view view-title="Generation 1">
+  <ion-content>
+    <ion-list>
+      <ion-item ng-repeat="poke1 in pokeGen1" href="#/app/Gen1/{{poke1.nationalDex}}">
+        {{poke1.nationalDex}} - {{poke1.name}}
+      </ion-item>
+    </ion-list>
+  </ion-content>
+</ion-view>

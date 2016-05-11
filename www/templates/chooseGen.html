@@ -1,0 +1,9 @@
+<ion-view view-title="Choose Generation">
+  <ion-content>
+    <ion-list>
+      <ion-item ng-repeat="pokeGen in generations" href="#/app/chooseGen/{{pokeGen.id}}">
+        {{pokeGen.title}}
+      </ion-item>
+    </ion-list>
+  </ion-content>
+</ion-view>
