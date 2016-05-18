@@ -1,0 +1,15 @@
+<ion-view view-title="{{spCtrl.data.nationalDex}} - {{spCtrl.data.name}}">
+  <ion-content>
+    <div class="card">
+      <div class="item item-text-wrap loud">
+        {{spCtrl.generalHeader}}
+      </div>
+      <div class="item item-text-wrap">
+        <div>National Dex ID: {{spCtrl.data.nationalDex}}</div>
+        <div>Name: {{spCtrl.data.name}}</div>
+        <div ng-if="spCtrl.data.types.type2">Types: {{spCtrl.data.types.type1}} / {{spCtrl.data.types.type2}}</div>
+        <div ng-if="spCtrl.data.types.type2 == null">Type: {{spCtrl.data.types.type1}}</div>
+      </div>
+    </div>
+  </ion-content>
+</ion-view>

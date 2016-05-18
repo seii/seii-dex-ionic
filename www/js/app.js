@@ -27,67 +27,50 @@ angular.module('seiiDex', ['ionic', 'seiiDex.controllers', 'seiiDex.services', '
 .config(function($stateProvider, $urlRouterProvider) {
   $stateProvider
 
-    .state('app', {
+  .state('loadScreen', {
+    //Blank URL actually matches the first screen, leaving "otherwise"
+    //   directive available for errors and general use
+    url: '',
+    templateUrl: 'templates/loadScreen.html',
+    controller: 'LoadScreenCtrl as loadCtrl'
+  })
+
+  .state('app', {
     url: '/app',
     abstract: true,
     templateUrl: 'templates/menu.html',
-    controller: 'AppCtrl'
+    controller: 'AppCtrl as appCtrl'
   })
 
-  .state('app.search', {
-    url: '/search',
+  .state('app.welcome', {
+    url: '/welcome',
     views: {
       'menuContent': {
-        templateUrl: 'templates/search.html'
-      }
-    }
-  })
-
-  .state('app.browse', {
-      url: '/browse',
-      views: {
-        'menuContent': {
-          templateUrl: 'templates/browse.html'
-        }
-      }
-    })
-  .state('app.playlists', {
-    url: '/playlists',
-    views: {
-      'menuContent': {
-        templateUrl: 'templates/playlists.html',
-        controller: 'PlaylistsCtrl'
+        templateUrl: 'templates/welcome.html',
+        controller: 'WelcomeCtrl as welcomeCtrl'
       }
     }
   })
 
-  .state('app.single', {
-    url: '/playlists/:playlistId',
+  .state('app.generation', {
+    url: '/generation',
     views: {
       'menuContent': {
-        templateUrl: 'templates/playlist.html',
-        controller: 'PlaylistCtrl'
+        templateUrl: 'templates/generation.html',
+        controller: 'GenerationCtrl as genCtrl'
       }
     }
   })
-  .state('app.chooseGen', {
-    url: '/chooseGen',
+
+  .state('app.singlePoke', {
+    url: '/singlePoke',
     views: {
       'menuContent': {
-        templateUrl: 'templates/chooseGen.html',
-        controller: 'ChooseGenCtrl'
-      }
-    }
-  })
-  .state('app.Gen1', {
-    url: '/Gen1',
-    views: {
-      'menuContent': {
-        templateUrl: 'templates/Gen1.html',
-        controller: 'Gen1Ctrl'
+        templateUrl: 'templates/singlePoke.html',
+        controller: 'SinglePokeCtrl as spCtrl'
       }
     }
   });
   // if none of the above states are matched, use this as the fallback
-  $urlRouterProvider.otherwise('/app/playlists');
+  $urlRouterProvider.otherwise('/app/welcome');
 });

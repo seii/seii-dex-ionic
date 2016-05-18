@@ -1,97 +1,234 @@
 "use strict";
 angular.module('seiiDex.controllers', [])
 
-.controller('AppCtrl', ['$scope', '$ionicModal', '$timeout', '$ionicPlatform', '$log', 'FileTester', '$q', '$http',
-            function($scope, $ionicModal, $timeout, $ionicPlatform, $log, FileTester, $q, $http) {
+.controller('LoadScreenCtrl', [
+  '$scope',
+  '$log',
+  'FileTester',
+  'PokeFetch',
+  '$http',
+  '$q',
+  function($scope, $log, FileTester, PokeFetch, $http, $q) {
+    var ls = this;
 
-  // With the new view caching in Ionic, Controllers are only called
-  // when they are recreated or on app start, instead of every page change.
-  // To listen for when this page is active (for example, to refresh data),
-  // listen for the $ionicView.enter event:
-  //$scope.$on('$ionicView.enter', function(e) {
-  //});
+    ls.finishedLoading;
 
-  FileTester.checkFiles().then(function(results) {
-    //$log.log(results);
-    var checkFileResults = [];
-    angular.forEach(results, function(result) {
-      checkFileResults.push($http.get(result.nativeURL).then(
-        function(response) {
-          return response.data;
-        })
-      )
-    })
+    ls.loadScreenTitle = "Loading...";
+    ls.loadStatus = "Loading initial files...";
 
-    $q.all(checkFileResults)
-    .then(function(results) {
-      $scope.pokeGen1 = results[0];
-      $scope.pokeGen2 = results[1];
-      $scope.pokeGen3 = results[2];
-      $scope.pokeGen4 = results[3];
-      $scope.pokeGen5 = results[4];
-      $scope.pokeGen6 = results[5];
-      $scope.pokeMoves = results[6];
-    });
-  });
+    ls.initialize = initialize;
+    ls.testFiles = testFiles;
+    ls.loadFilesIntoScope = loadFilesIntoScope;
 
-  // Form data for the login modal
-  $scope.loginData = {};
+    ls.initialize();
 
-  // Create the login modal that we will use later
-  $ionicModal.fromTemplateUrl('templates/login.html', {
-    scope: $scope
-  }).then(function(modal) {
-    $scope.modal = modal;
-  });
+    function initialize() {
+      $log.log("test?");
+      FileTester.checkFiles()
+      .then(function(results) { return ls.testFiles(results); })
+      .then(function(results) { return ls.loadFilesIntoScope(results); })
+      .catch(function(error) {
+        $log.log("Error while loading files: ", error.message);
+        $log.log("Attempting to create files");
+        ls.loadScreenTitle = "Creating...";
+        ls.loadStatus = "One or more files are missing, creating them now...";
+        FileTester.createFiles()
+        .then(function(result) {
+          $log.log("Success: ", result);
+          ls.loadScreenTitle = "Created!";
+          ls.loadStatus = "Successfully created files!";
+          //TODO: Figure out how to retry loading files from here
+        });
+      });
+    };
 
-  // Triggered in the login modal to close it
-  $scope.closeLogin = function() {
-    $scope.modal.hide();
-  };
+    function testFiles(results) {
 
-  // Open the login modal
-  $scope.login = function() {
-    $scope.modal.show();
-  };
+      var checkFileResults = [];
+      angular.forEach(results, function(result) {
+        checkFileResults.push($http.get(result.nativeURL).then(
+          function(response) {
+            return response.data;
+          })
+        );
+        ls.loadStatus = "Total Files Loaded: " + checkFileResults.length;
+      });
 
-  // Perform the login action when the user submits the login form
-  $scope.doLogin = function() {
-    console.log('Doing login', $scope.loginData);
+      return $q.all(checkFileResults);
+    };
 
-    // Simulate a login delay. Remove this and replace with your login
-    // code if using a login system
-    $timeout(function() {
-      $scope.closeLogin();
-    }, 1000);
-  };
-}])
+    function loadFilesIntoScope(results) {
+      PokeFetch.initList(results);
 
-.controller('PlaylistsCtrl', ['$scope', '$log', function($scope, $log) {
-  $scope.playlists = [
-    { title: 'Reggae', id: 1 },
-    { title: 'Chill', id: 2 },
-    { title: 'Dubstep', id: 3 },
-    { title: 'Indie', id: 4 },
-    { title: 'Rap', id: 5 },
-    { title: 'Cowbell', id: 6 }
-  ];
-}])
+      ls.loadScreenTitle = "Finished!";
+      ls.loadStatus = "Successfully loaded " + results.length + " files!";
+      ls.finishedLoading = true;
+    };
+  }
+])
 
-.controller('PlaylistCtrl', ['$scope', '$stateParams', function($scope, $stateParams) {
-}])
+.controller('AppCtrl', [
+  '$scope',
+  '$ionicModal',
+  '$timeout',
+  '$ionicPlatform',
+  '$log',
+  '$ionicActionSheet',
+  'StateTracker',
+  '$state',
+  function($scope, $ionicModal, $timeout, $ionicPlatform, $log, $ionicActionSheet, StateTracker, $state) {
 
+    // With the new view caching in Ionic, Controllers are only called
+    // when they are recreated or on app start, instead of every page change.
+    // To listen for when this page is active (for example, to refresh data),
+    // listen for the $ionicView.enter event:
+    //$scope.$on('$ionicView.enter', function(e) {
+    //});
 
-.controller('ChooseGenCtrl', ['$scope', '$log', function($scope, $log) {
-  $scope.generations = [
-    { title: 'Test1', id: 1 },
-    { title: 'Test2', id: 2 },
-    { title: 'Test3', id: 3 },
-    { title: 'Test4', id: 4 },
-    { title: 'Test5', id: 5 },
-    { title: 'Test6', id: 6 }
-  ];
-}])
+    var app = this;
 
-.controller('Gen1Ctrl', ['$scope', '$log', function($scope, $log) {
-  
-}]);
+    app.generations;
+
+    app.showMenu = showMenu;
+    app.parseButtons = parseButtons;
+
+    app.generations = [
+      {id: "1", desc: "Generation 1: Red/Blue/Yellow"},
+      {id: "2", desc: "Generation 2: Gold/Silver/Crystal"},
+      {id: "3", desc: "Generation 3: Ruby/Sapphire/Emerald/FireRed/LeafGreen"},
+      {id: "4", desc: "Generation 4: Diamond/Pearl/Platinum/HeartGold/SoulSilver"},
+      {id: "5", desc: "Generation 5: Black/White/Black 2/White 2"},
+      {id: "6", desc: "Generation 6: X/Y/Alpha Sapphire/Omega Ruby"}
+    ];
+
+    function showMenu() {
+
+      // Show the action sheet
+      var hideSheet = $ionicActionSheet.show({
+        buttons: [
+          {text: "Red/Blue/Yellow"},
+          {text: "Gold/Silver/Crystal"},
+          {text: "Ruby/Sapphire/Emerald"},
+          {text: "FireRed/LeafGreen"},
+          {text: "Diamond/Pearl/Platinum"},
+          {text: "HeartGold/SoulSilver"},
+          {text: "Black/White"},
+          {text: "Black 2/White 2"},
+          {text: "X/Y"},
+          {text: "Alpha Sapphire/Omega Ruby"}
+        ],
+        titleText: 'Choose a group of games:',
+        cancelText: 'Cancel',
+        cancel: function() {
+          // add cancel code..
+          return true;
+        },
+        cssClass: "game-actionsheet",
+        buttonClicked: function(index) {
+          $log.log("Button clicked: ", index);
+          StateTracker.setGen(app.parseButtons(index));
+          $log.log("Setting generation: ", StateTracker.getGen());
+          $state.go("app.generation");
+          return true;
+        }
+      });
+    };
+
+    function parseButtons(index) {
+      var trueValue;
+
+      switch(index) {
+        case 0:
+          trueValue = 1;
+          break;
+        case 1:
+          trueValue = 2;
+          break;
+        case 2:
+        case 3:
+          trueValue = 3;
+          break;
+        case 4:
+        case 5:
+          trueValue = 4;
+          break;
+        case 6:
+        case 7:
+          trueValue = 5;
+          break;
+        case 8:
+        case 9:
+          trueValue = 6;
+          break;
+      }
+
+      return trueValue;
+    };
+  }
+])
+
+.controller('WelcomeCtrl', [
+  '$scope',
+  '$stateParams',
+  function($scope, $stateParams) {
+    var welcome = this;
+
+    welcome.title = "Welcome!";
+    welcome.greeting = "This is the SeiiDex, where you can find information on all 751 current Pokemon.";
+    welcome.instructionsHeader = "How do I use it?";
+    welcome.instructionsContent = "Tap the button at the bottom of the screen, then pick the general group of Pokemon games you're looking for information about. From there, just browse or search to find whatever you need!";
+    welcome.creditHeader = "Credits:";
+    welcome.creditContent = '"Veekun" (https://github.com/veekun/pokedex), whose data is the underpinnings of this entire application.';
+  }
+])
+
+.controller('GenerationCtrl', [
+  '$scope',
+  '$log',
+  'PokeFetch',
+  'StateTracker',
+  '$state',
+  function($scope, $log, PokeFetch, StateTracker, $state) {
+    var gen = this;
+
+    gen.data;
+    gen.thisGen;
+    gen.goToPoke = goToPoke;
+
+    gen.thisGen = StateTracker.getGen();
+    $log.log("Selected generation: ", gen.thisGen);
+    $log.log("Fetching data for Generation " + gen.thisGen);
+    gen.data = PokeFetch.getPokeList(gen.thisGen);
+    $log.log("Data: ", gen.data);
+
+    function goToPoke(number, name) {
+      $log.log("Number: ", number, "Name: ", name);
+      var thisPoke = PokeFetch.getPoke(number, name, StateTracker.getGen());
+      StateTracker.setCurrentPoke(thisPoke);
+      $state.go("app.singlePoke");
+    };
+  }
+])
+
+.controller('SinglePokeCtrl', [
+  '$scope',
+  '$log',
+  'PokeFetch',
+  'StateTracker',
+  function($scope, $log, PokeFetch, StateTracker) {
+    var sp = this;
+
+    sp.data;
+
+    sp.generalHeader = "General:";
+    sp.evolutionHeader = "Evolution:";
+    sp.statsHeader = "Statistics:";
+    sp.breedingHeader = "Breeding:";
+    sp.evHeader = "Effort Values:";
+    sp.movesHeader = "Moves:";
+    sp.locationHeader = "Locations:";
+
+    sp.data = StateTracker.getCurrentPoke();
+    $log.log("Current Pokemon is: ", sp.data);
+  }
+]);

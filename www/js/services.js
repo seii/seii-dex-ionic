@@ -12,9 +12,9 @@ angular.module('seiiDex.services', [])
     var CDVFILE_PATH_TO_WWW = "cdvfile://localhost/assets/www/";
 
     var testFile;
-    var copyFile;
+    var copyZipFile;
     var unzipFiles;
-    var deleteFile;
+    var deleteZipFile;
 
     var fileNameArray = [
       'Pokemon1.json',
@@ -45,19 +45,19 @@ angular.module('seiiDex.services', [])
       return testFileQ.promise;
     };
 
-    //copyFile();
-
-    copyFile = function() {
-      var copyFileQ = $q.defer();
+    copyZipFile = function() {
+      var copyZipFileQ = $q.defer();
 
       $cordovaFile.copyFile(CDVFILE_PATH_TO_WWW, ZIP_FILE_NAME, cordova.file.dataDirectory, "")
       .then(function (success) {
         $log.log("Successfully copied " + ZIP_FILE_NAME + " to " + CDVFILE_PATH_TO_WWW);
-        copyFileQ.resolve(success);
+        copyZipFileQ.resolve(success);
       }, function (error) {
         $log.log("Failed to copy " + ZIP_FILE_NAME + " to " + CDVFILE_PATH_TO_WWW);
-        copyFileQ.reject(error);
+        copyZipFileQ.reject(error);
       });
+
+      return copyZipFileQ.promise;
     };
 
     unzipFiles = function() {
@@ -73,83 +73,102 @@ angular.module('seiiDex.services', [])
         $log.log("Failed to unzip " + ZIP_FILE_NAME + " to " + CDVFILE_PATH_TO_WWW, error);
         unzipFileQ.reject(error);
       });
+
+      return unzipFileQ.promise;
     };
 
-    deleteFile = function() {
-      var deleteFileQ = $q.defer();
+    deleteZipFile = function() {
+      var deleteZipFileQ = $q.defer();
 
       $cordovaFile.removeFile(cordova.file.dataDirectory, ZIP_FILE_NAME)
       .then(function (success) {
-        $log.log("Successfully deleted " + ZIP_FILE_NAME + " from " + CDVFILE_PATH_TO_WWW, success);
-        deleteFileQ.resolve(success);
+        $log.log("Successfully deleted " + ZIP_FILE_NAME + " from " + CDVFILE_PATH_TO_WWW, success.fileRemoved.name);
+        deleteZipFileQ.resolve(success);
       }, function (error) {
         $log.log("Failed to delete " + ZIP_FILE_NAME + " from " + CDVFILE_PATH_TO_WWW, error);
-        deleteFileQ.reject(error);
+        deleteZipFileQ.reject(error);
       });
+
+      return deleteZipFileQ.promise;
     };
 
     return {
       checkFiles: function() {
-        var deferred = $q.defer();
         var fileTestResults = [];
 
-        $ionicPlatform.ready().then(function() {
+        return $ionicPlatform.ready()
+        .then(function() {
           angular.forEach(fileNameArray, function(currentFile) {
-            $log.log("Checking for file: " + currentFile);
+            $log.log("Checking for file: ", currentFile);
             fileTestResults.push(testFile(currentFile));
           });
 
-          $q.all(fileTestResults)
-          .then(
-            function(results) {
-              $log.log("RESULTS: " + results);
-              deferred.resolve(results);
-            },
-            function(errors) {
-              $log.log("ERRORS: " + errors);
-              deferred.reject(errors);
-            },
-            function(updates) {
-              $log.log("UPDATES: " + updates);
-              deferred.notify(updates);
-            }
-          );
+          return $q.all(fileTestResults);
         });
+      },
+      createFiles: function() {
 
-        return deferred.promise;
+        return $ionicPlatform.ready().then(function() {
+          $log.log("Platform is ready for file creation via Cordova plugins");
+          $log.log("Attempting to copy ZIP file");
+          return copyZipFile()
+          .then(function(copyFileResult) {
+            $log.log("Attempting to unzip base file");
+            return unzipFiles();
+          })
+          .then(function(unzipFileResult) {
+            $log.log("Attempting to delete ZIP file");
+            return deleteZipFile();
+          });
+        });
       }
     };
-}])
+  }
+])
+
+.service('StateTracker',
+  ['$log',
+  function($log) {
+    var st = this;
+
+    st.currentGen;
+    st.currenPoke;
+
+    return {
+      getGen: function() {
+        return st.currentGen;
+      },
+      setGen: function(data) {
+        st.currentGen = data;
+      },
+      getCurrentPoke: function() {
+        return st.currentPoke;
+      },
+      setCurrentPoke: function(data) {
+        st.currentPoke =  data;
+      }
+    }
+  }
+])
 
 .service('PokeFetch',
   ['$log',
   function($log) {
-    var pokeGen1;
-    var pokeGen2;
-    var pokeGen3;
-    var pokeGen4;
-    var pokeGen5;
-    var pokeGen6;
+    var pf = this;
+
+    pf.pokeData;
 
     return {
+      initList: function(dataArray) {
+        pf.pokeData = dataArray;
+      },
+      getPokeList: function(generation) {
+        return pf.pokeData[generation - 1];
+      },
       getPoke: function(id, name, generation) {
-        switch(generation) {
-          case "1":
-            break;
-          case "2":
-            break;
-          case "3":
-            break;
-          case "4":
-            break;
-          case "5":
-            break;
-          case "6":
-            break;
-          default:
-            $log.log("No matching generation found for " + generation + "!");
-            break;
-        }
+        var onePoke = pf.pokeData[generation -1];
+        return onePoke[id + " - " + name];
       }
     }
-}]);
+  }
+]);

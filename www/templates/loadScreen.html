@@ -1,0 +1,16 @@
+<ion-view view-title="{{loadCtrl.loadScreenTitle}}" hide-back-button="true">
+  <ion-content>
+    <div class="card">
+      <div class="item item-text-wrap center-text">
+        Status:
+        <br />
+        <br />
+        {{loadCtrl.loadStatus}}
+        <br />
+      </div>
+    </div>
+    <div>
+      <a class="button button-block icon-right ion-chevron-right button-dark add-margin-sm" ng-if="loadCtrl.finishedLoading" href="#/app/welcome">Let's Start!</a>
+    </div>
+  </ion-content>
+</ion-view>

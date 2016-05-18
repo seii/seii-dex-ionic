@@ -1,1 +1,72 @@
 /* Empty. Add your own CSS if you like */
+.loud
+{
+  font-weight: bold;
+}
+
+.center-text
+{
+  text-align: center;
+}
+
+.add-margin-sm
+{
+  margin-left: 1em;
+  margin-right: 1em;
+}
+
+.menu-ball
+{
+  margin-bottom: 0;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+.game-actionsheet
+{
+  //width: 50%;
+}
+
+.game-actionsheet .action-sheet-backdrop .active
+{
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.game-actionsheet .action-sheet-group
+{
+  //background-color: rgba(0,0,0,0.1);
+  margin-left: 20%;
+  margin-right: 20%;
+}
+
+.game-actionsheet .action-sheet-title
+{
+  text-align: center !important;
+  font-weight: bold;
+  padding: 6px !important;
+  border-bottom-color: rgba(0,0,0,0.5) !important;
+  border-bottom-width: 1px;
+  border-bottom-style: inset;
+}
+
+.game-actionsheet .action-sheet .button
+{
+    text-align: center;
+    line-height: normal;
+    min-height: 35px;
+    font-size: 1em;
+    border-bottom-color: rgba(0,0,0,0.1);
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+}
+
+.game-actionsheet .action-sheet .button .text-action
+{
+    //margin-left: 30px;
+}
+
+.game-actionsheet .action-sheet .button .text-width
+{
+    //margin-left: 50px;
+}

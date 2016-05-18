@@ -1,0 +1,9 @@
+<ion-view view-title="Generation {{genCtrl.thisGen}}">
+  <ion-content>
+    <ion-list>
+      <ion-item ng-repeat="poke in genCtrl.data" ng-click="genCtrl.goToPoke('{{poke.nationalDex}}', '{{poke.name}}')">
+        {{poke.nationalDex}} - {{poke.name}}
+      </ion-item>
+    </ion-list>
+  </ion-content>
+</ion-view>
