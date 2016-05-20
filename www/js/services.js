@@ -166,8 +166,16 @@ angular.module('seiiDex.services', [])
         return pf.pokeData[generation - 1];
       },
       getPoke: function(id, name, generation) {
-        var onePoke = pf.pokeData[generation -1];
+        var onePoke = pf.pokeData[generation - 1];
         return onePoke[id + " - " + name];
+      },
+      listToArray: function(someList) {
+        var tempArray = [];
+        angular.forEach(someList, function(x) {
+          tempArray.push(x);
+        });
+
+        return tempArray;
       }
     }
   }

@@ -1,5 +1,6 @@
 <ion-view view-title="{{spCtrl.data.nationalDex}} - {{spCtrl.data.name}}">
   <ion-content>
+    <!-- GENERAL -->
     <div class="card">
       <div class="item item-text-wrap loud">
         {{spCtrl.generalHeader}}
@@ -9,7 +10,119 @@
         <div>Name: {{spCtrl.data.name}}</div>
         <div ng-if="spCtrl.data.types.type2">Types: {{spCtrl.data.types.type1}} / {{spCtrl.data.types.type2}}</div>
         <div ng-if="spCtrl.data.types.type2 == null">Type: {{spCtrl.data.types.type1}}</div>
+        <div ng-if="spCtrl.data.form != 'None'">Form: {{spCtrl.data.form}}</div>
       </div>
+    </div>
+    <!-- ABILITIES -->
+    <div ng-if="spCtrl.data.abilities" class="card">
+      <div class="item item-text-wrap loud">
+        {{spCtrl.abilitiesHeader}}
+      </div>
+      <div class="item item-text-wrap">
+        <div>Ability 1: {{spCtrl.data.abilities.ability1}}</div>
+        <div ng-if="spCtrl.data.abilities.ability2">Ability 2: {{spCtrl.data.abilities.ability2}}</div>
+        <div ng-if="spCtrl.data.abilities.abilityHidden">Hidden Ability: {{spCtrl.data.abilities.abilityHidden}}</div>
+      </div>
+    </div>
+    <!-- EVOLUTION -->
+    <div ng-if="spCtrl.data.evolution.length > 0" class="card">
+      <div class="item item-text-wrap loud">
+        {{spCtrl.evolutionHeader}}
+      </div>
+      <div ng-repeat="evo in spCtrl.data.evolution" class="item item-text-wrap">
+        <div>Method: {{evo.methodExplanation}}</div>
+        <div>Evolves Into: {{evo.nationalDex}} - {{evo.name}}</div>
+      </div>
+    </div>
+    <!-- BREEDING -->
+    <div ng-if="spCtrl.data.breeding" class="card">
+      <div class="item item-text-wrap loud">
+        {{spCtrl.breedingHeader}}
+      </div>
+      <div class="item item-text-wrap">
+        <div>Base Steps To Hatch: {{spCtrl.data.breeding.baseSteps}}</div>
+        <div ng-if="spCtrl.data.breeding.eggGroups.length > 1">
+          Egg Group 1: {{spCtrl.data.breeding.eggGroups[0]}}
+          <br />
+          Egg Group 2: {{spCtrl.data.breeding.eggGroups[1]}}
+        </div>
+        <div ng-if="spCtrl.data.breeding.eggGroups.length == 1">
+          Egg Group 1: {{spCtrl.data.breeding.eggGroups[0]}}
+        </div>
+      </div>
+    </div>
+    <!-- STATS -->
+    <div class="card">
+      <div class="item item-text-wrap loud">
+        {{spCtrl.statsHeader}}
+      </div>
+      <div ng-if="spCtrl.thisGen == 1" class="item item-text-wrap">
+        <div>HP: {{spCtrl.data.stats.hp}}</div>
+        <div>Attack: {{spCtrl.data.stats.attack}}</div>
+        <div>Defense: {{spCtrl.data.stats.defense}}</div>
+        <div>Special: {{spCtrl.data.stats.specialAttack}}</div>
+        <div>Speed: {{spCtrl.data.stats.speed}}</div>
+      </div>
+      <div ng-if="spCtrl.thisGen > 1" class="item item-text-wrap">
+        <div>HP: {{spCtrl.data.stats.hp}}</div>
+        <div>Attack: {{spCtrl.data.stats.attack}}</div>
+        <div>Defense: {{spCtrl.data.stats.defense}}</div>
+        <div>Special Attack: {{spCtrl.data.stats.specialAttack}}</div>
+        <div>Special Defense: {{spCtrl.data.stats.specialDefense}}</div>
+        <div>Speed: {{spCtrl.data.stats.speed}}</div>
+      </div>
+    </div>
+    <!-- EFFORT VALUES -->
+    <div class="card">
+      <div class="item item-text-wrap loud">
+        {{spCtrl.evHeader}}
+      </div>
+      <div ng-if="spCtrl.data.effortValues.hp" class="item item-text-wrap">
+        HP: {{spCtrl.data.effortValues.hp}}
+      </div>
+      <div ng-if="spCtrl.data.effortValues.attack" class="item item-text-wrap">
+        Attack: {{spCtrl.data.effortValues.attack}}
+      </div>
+      <div ng-if="spCtrl.data.effortValues.defense" class="item item-text-wrap">
+        Defense: {{spCtrl.data.effortValues.defense}}
+      </div>
+      <div ng-if="spCtrl.thisGen > 1 &&spCtrl.data.effortValues.specialAttack" class="item item-text-wrap">
+        Special Attack: {{spCtrl.data.effortValues.specialAttack}}
+      </div>
+      <div ng-if="spCtrl.thisGen > 1 && spCtrl.data.effortValues.specialDefense" class="item item-text-wrap">
+        Special Defense: {{spCtrl.data.effortValues.specialDefense}}
+      </div>
+      <div ng-if="spCtrl.data.effortValues.speed" class="item item-text-wrap">
+        Speed: {{spCtrl.data.effortValues.speed}}
+      </div>
+      <div ng-if="spCtrl.thisGen == 1 && spCtrl.data.effortValues.specialAttack" class="item item-text-wrap">
+        Special: {{spCtrl.data.effortValues.specialAttack}}
+      </div>
+      <div ng-if="spCtrl.thisGen == 1 && spCtrl.data.effortValues.specialDefense" class="item item-text-wrap">
+        Special: {{spCtrl.data.effortValues.specialDefense}}
+      </div>
+    </div>
+    <!-- MOVES -->
+    <div class="card">
+      <div class="item item-text-wrap loud">
+        {{spCtrl.movesHeader}}
+      </div>
+      <!--<div ng-repeat="(move.name, move.level) in spCtrl.data.evolution" class="item item-text-wrap">
+        <div>Method: {{evo.methodExplanation}}</div>
+        <div>Evolves Into: {{evo.nationalDex}} - {{evo.name}}</div>
+      </div>-->
+      <div class="item item-text-wrap">TODO</div>
+    </div>
+    <!-- LOCATIONS -->
+    <div class="card">
+      <div class="item item-text-wrap loud">
+        {{spCtrl.locationsHeader}}
+      </div>
+      <!--<div ng-repeat="(move.name, move.level) in spCtrl.data.evolution" class="item item-text-wrap">
+        <div>Method: {{evo.methodExplanation}}</div>
+        <div>Evolves Into: {{evo.nationalDex}} - {{evo.name}}</div>
+      </div>-->
+      <div class="item item-text-wrap">TODO</div>
     </div>
   </ion-content>
 </ion-view>

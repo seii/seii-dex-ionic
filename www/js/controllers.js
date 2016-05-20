@@ -58,6 +58,7 @@ angular.module('seiiDex.controllers', [])
     };
 
     function loadFilesIntoScope(results) {
+      $log.log("Loading into scope: ", results);
       PokeFetch.initList(results);
 
       ls.loadScreenTitle = "Finished!";
@@ -76,7 +77,8 @@ angular.module('seiiDex.controllers', [])
   '$ionicActionSheet',
   'StateTracker',
   '$state',
-  function($scope, $ionicModal, $timeout, $ionicPlatform, $log, $ionicActionSheet, StateTracker, $state) {
+  'PokeFetch',
+  function($scope, $ionicModal, $timeout, $ionicPlatform, $log, $ionicActionSheet, StateTracker, $state, PokeFetch) {
 
     // With the new view caching in Ionic, Controllers are only called
     // when they are recreated or on app start, instead of every page change.
@@ -128,7 +130,29 @@ angular.module('seiiDex.controllers', [])
           $log.log("Button clicked: ", index);
           StateTracker.setGen(app.parseButtons(index));
           $log.log("Setting generation: ", StateTracker.getGen());
-          $state.go("app.generation");
+
+          if($state.current.name == "app.welcome") {
+            $log.log("On Welcome screen, move to Generation screen");
+            StateTracker.setCurrentPoke(null);
+            $state.go("app.generation");
+          }
+
+          if($state.current.name == "app.generation") {
+            $log.log("On Generation screen, reload to show changes");
+            StateTracker.setCurrentPoke(null);
+            $state.go("app.generation",null,{reload: true});
+          }
+
+          if($state.current.name == "app.singlePoke") {
+            $log.log("Viewing a Pokemon, reload with selected Generation");
+            var tempPoke = StateTracker.getCurrentPoke();
+            $log.log("tempPoke: ", tempPoke);
+            var testPoke = PokeFetch.getPoke(tempPoke.nationalDex, tempPoke.name, StateTracker.getGen());
+            $log.log("testPoke: ", testPoke);
+            StateTracker.setCurrentPoke(testPoke);
+            $state.go("app.singlePoke",null,{reload: true});
+          }
+
           return true;
         }
       });
@@ -192,14 +216,20 @@ angular.module('seiiDex.controllers', [])
     var gen = this;
 
     gen.data;
-    gen.thisGen;
+    gen.dataAsArray;
+    gen.thisGen = StateTracker.getGen();
+    $log.log("Initial generation: ", gen.thisGen);
     gen.goToPoke = goToPoke;
 
-    gen.thisGen = StateTracker.getGen();
-    $log.log("Selected generation: ", gen.thisGen);
-    $log.log("Fetching data for Generation " + gen.thisGen);
-    gen.data = PokeFetch.getPokeList(gen.thisGen);
-    $log.log("Data: ", gen.data);
+    $scope.$on('$ionicView.enter', function(e) {
+      gen.thisGen = StateTracker.getGen();
+      $log.log("Selected generation: ", gen.thisGen);
+      $log.log("Fetching data for Generation " + gen.thisGen);
+      gen.data = PokeFetch.getPokeList(gen.thisGen);
+      $log.log("genData: ", gen.data);
+      gen.dataAsArray = PokeFetch.listToArray(gen.data);
+      $log.log("genDataAsArray: ", gen.dataAsArray);
+    });
 
     function goToPoke(number, name) {
       $log.log("Number: ", number, "Name: ", name);
@@ -219,16 +249,21 @@ angular.module('seiiDex.controllers', [])
     var sp = this;
 
     sp.data;
+    sp.thisGen;
 
     sp.generalHeader = "General:";
+    sp.abilitiesHeader = "Abilities:";
     sp.evolutionHeader = "Evolution:";
     sp.statsHeader = "Statistics:";
     sp.breedingHeader = "Breeding:";
     sp.evHeader = "Effort Values:";
     sp.movesHeader = "Moves:";
-    sp.locationHeader = "Locations:";
+    sp.locationsHeader = "Locations:";
 
-    sp.data = StateTracker.getCurrentPoke();
-    $log.log("Current Pokemon is: ", sp.data);
+    $scope.$on('$ionicView.enter', function(e) {
+      sp.data = StateTracker.getCurrentPoke();
+      $log.log("Current Pokemon is: ", sp.data);
+      sp.thisGen = StateTracker.getGen();
+    });
   }
 ]);
