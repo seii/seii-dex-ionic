@@ -8,10 +8,12 @@ angular.module('seiiDex.controllers', [])
   'PokeFetch',
   '$http',
   '$q',
-  function($scope, $log, FileTester, PokeFetch, $http, $q) {
+  '$ionicHistory',
+  function($scope, $log, FileTester, PokeFetch, $http, $q, $ionicHistory) {
     var ls = this;
 
     ls.finishedLoading;
+    ls.loopDetector = 0;
 
     ls.loadScreenTitle = "Loading...";
     ls.loadStatus = "Loading initial files...";
@@ -19,26 +21,33 @@ angular.module('seiiDex.controllers', [])
     ls.initialize = initialize;
     ls.testFiles = testFiles;
     ls.loadFilesIntoScope = loadFilesIntoScope;
+    ls.createFiles = createFiles;
 
     ls.initialize();
 
+    //Prevent users from navigating backwards to this screen
+    $ionicHistory.nextViewOptions({
+      disableBack: true
+    });
+
     function initialize() {
-      $log.log("test?");
       FileTester.checkFiles()
       .then(function(results) { return ls.testFiles(results); })
       .then(function(results) { return ls.loadFilesIntoScope(results); })
       .catch(function(error) {
         $log.log("Error while loading files: ", error.message);
-        $log.log("Attempting to create files");
-        ls.loadScreenTitle = "Creating...";
-        ls.loadStatus = "One or more files are missing, creating them now...";
-        FileTester.createFiles()
-        .then(function(result) {
-          $log.log("Success: ", result);
-          ls.loadScreenTitle = "Created!";
-          ls.loadStatus = "Successfully created files!";
-          //TODO: Figure out how to retry loading files from here
-        });
+        ls.loadStatus = "One or more required files are missing, attempting to create them...";
+        ls.loopDetector++;
+        $log.log("loopDetector: ", ls.loopDetector);
+
+        //Quick and dirty way to prevent an infinite loop if there's a persistent error
+        if(ls.loopDetector < 2) {
+          ls.createFiles();
+        }else {
+          $log.log("Failed to create files, loading loop detected");
+          ls.loadScreenTitle = "Uh Oh!";
+          ls.loadStatus = "One or more required files could not be created. As a result, this app can't continue operation. Please try exiting and re-launching the app. If that does not fix this problem, please reinstall the app.";
+        }
       });
     };
 
@@ -65,6 +74,21 @@ angular.module('seiiDex.controllers', [])
       ls.loadStatus = "Successfully loaded " + results.length + " files!";
       ls.finishedLoading = true;
     };
+
+    function createFiles() {
+      $log.log("Attempting to create files");
+      ls.loadScreenTitle = "Creating...";
+      ls.loadStatus = "Creating required files...";
+
+      FileTester.createFiles()
+      .then(function(result) {
+        $log.log("Success: ", result);
+        ls.loadScreenTitle = "Created!";
+        ls.loadStatus = "Successfully created files!";
+        $log.log("Attempting to initialize again");
+        ls.initialize();
+      });
+    }
   }
 ])
 
@@ -93,32 +117,26 @@ angular.module('seiiDex.controllers', [])
 
     app.showMenu = showMenu;
     app.parseButtons = parseButtons;
-
-    app.generations = [
-      {id: "1", desc: "Generation 1: Red/Blue/Yellow"},
-      {id: "2", desc: "Generation 2: Gold/Silver/Crystal"},
-      {id: "3", desc: "Generation 3: Ruby/Sapphire/Emerald/FireRed/LeafGreen"},
-      {id: "4", desc: "Generation 4: Diamond/Pearl/Platinum/HeartGold/SoulSilver"},
-      {id: "5", desc: "Generation 5: Black/White/Black 2/White 2"},
-      {id: "6", desc: "Generation 6: X/Y/Alpha Sapphire/Omega Ruby"}
-    ];
+    app.gameList;
 
     function showMenu() {
 
+      //Create some buttons for the action sheet
+      var menuButtons = function() {
+        var tempArray = [];
+        var tempList = StateTracker.getGameList();
+
+        for(var i=0; i < tempList.length; i++) {
+          var tempObj = {text: tempList[i]};
+          tempArray.push(tempObj);
+        }
+
+        return tempArray;
+      };
+
       // Show the action sheet
       var hideSheet = $ionicActionSheet.show({
-        buttons: [
-          {text: "Red/Blue/Yellow"},
-          {text: "Gold/Silver/Crystal"},
-          {text: "Ruby/Sapphire/Emerald"},
-          {text: "FireRed/LeafGreen"},
-          {text: "Diamond/Pearl/Platinum"},
-          {text: "HeartGold/SoulSilver"},
-          {text: "Black/White"},
-          {text: "Black 2/White 2"},
-          {text: "X/Y"},
-          {text: "Alpha Sapphire/Omega Ruby"}
-        ],
+        buttons: menuButtons(),
         titleText: 'Choose a group of games:',
         cancelText: 'Cancel',
         cancel: function() {
@@ -130,6 +148,8 @@ angular.module('seiiDex.controllers', [])
           $log.log("Button clicked: ", index);
           StateTracker.setGen(app.parseButtons(index));
           $log.log("Setting generation: ", StateTracker.getGen());
+          StateTracker.setGame(index);
+          $log.log("Setting game: ", StateTracker.getGame());
 
           if($state.current.name == "app.welcome") {
             $log.log("On Welcome screen, move to Generation screen");
@@ -147,7 +167,7 @@ angular.module('seiiDex.controllers', [])
             $log.log("Viewing a Pokemon, reload with selected Generation");
             var tempPoke = StateTracker.getCurrentPoke();
             $log.log("tempPoke: ", tempPoke);
-            var testPoke = PokeFetch.getPoke(tempPoke.nationalDex, tempPoke.name, StateTracker.getGen());
+            var testPoke = PokeFetch.getPoke(tempPoke.nationalDex, tempPoke.name, tempPoke.form, StateTracker.getGen());
             $log.log("testPoke: ", testPoke);
             StateTracker.setCurrentPoke(testPoke);
             $state.go("app.singlePoke",null,{reload: true});
@@ -218,6 +238,7 @@ angular.module('seiiDex.controllers', [])
     gen.data;
     gen.dataAsArray;
     gen.thisGen = StateTracker.getGen();
+    gen.thisGame = StateTracker.getGame();
     $log.log("Initial generation: ", gen.thisGen);
     gen.goToPoke = goToPoke;
 
@@ -225,15 +246,17 @@ angular.module('seiiDex.controllers', [])
       gen.thisGen = StateTracker.getGen();
       $log.log("Selected generation: ", gen.thisGen);
       $log.log("Fetching data for Generation " + gen.thisGen);
+      gen.thisGame = StateTracker.getGame();
+      $log.log("Selected game: ", gen.thisGame);
       gen.data = PokeFetch.getPokeList(gen.thisGen);
       $log.log("genData: ", gen.data);
       gen.dataAsArray = PokeFetch.listToArray(gen.data);
       $log.log("genDataAsArray: ", gen.dataAsArray);
     });
 
-    function goToPoke(number, name) {
-      $log.log("Number: ", number, "Name: ", name);
-      var thisPoke = PokeFetch.getPoke(number, name, StateTracker.getGen());
+    function goToPoke(number, name, form) {
+      $log.log("Number: ", number, "Name: ", name, "Form: ", form);
+      var thisPoke = PokeFetch.getPoke(number, name, form, StateTracker.getGen());
       StateTracker.setCurrentPoke(thisPoke);
       $state.go("app.singlePoke");
     };

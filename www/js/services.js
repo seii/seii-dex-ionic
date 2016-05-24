@@ -132,7 +132,21 @@ angular.module('seiiDex.services', [])
     var st = this;
 
     st.currentGen;
+    st.currentGame;
     st.currenPoke;
+
+    st.gameList = [
+      "Red/Blue/Yellow",
+      "Gold/Silver/Crystal",
+      "Ruby/Sapphire/Emerald",
+      "FireRed/LeafGreen",
+      "Diamond/Pearl/Platinum",
+      "HeartGold/SoulSilver",
+      "Black/White",
+      "Black 2/White 2",
+      "X/Y",
+      "Alpha Sapphire/Omega Ruby"
+    ];
 
     return {
       getGen: function() {
@@ -140,6 +154,15 @@ angular.module('seiiDex.services', [])
       },
       setGen: function(data) {
         st.currentGen = data;
+      },
+      getGame: function() {
+        return st.currentGame;
+      },
+      setGame: function(data) {
+        st.currentGame = st.gameList[data];
+      },
+      getGameList: function() {
+        return st.gameList;
       },
       getCurrentPoke: function() {
         return st.currentPoke;
@@ -165,8 +188,9 @@ angular.module('seiiDex.services', [])
       getPokeList: function(generation) {
         return pf.pokeData[generation - 1];
       },
-      getPoke: function(id, name, generation) {
+      getPoke: function(id, name, form, generation) {
         var onePoke = pf.pokeData[generation - 1];
+
         return onePoke[id + " - " + name];
       },
       listToArray: function(someList) {
