@@ -102,7 +102,8 @@ angular.module('seiiDex.controllers', [])
   'StateTracker',
   '$state',
   'PokeFetch',
-  function($scope, $ionicModal, $timeout, $ionicPlatform, $log, $ionicActionSheet, StateTracker, $state, PokeFetch) {
+  '$cordovaToast',
+  function($scope, $ionicModal, $timeout, $ionicPlatform, $log, $ionicActionSheet, StateTracker, $state, PokeFetch, $cordovaToast) {
 
     // With the new view caching in Ionic, Controllers are only called
     // when they are recreated or on app start, instead of every page change.
@@ -145,32 +146,39 @@ angular.module('seiiDex.controllers', [])
         },
         cssClass: "game-actionsheet",
         buttonClicked: function(index) {
-          $log.log("Button clicked: ", index);
+          //$log.log("Button clicked: ", index);
           StateTracker.setGen(app.parseButtons(index));
-          $log.log("Setting generation: ", StateTracker.getGen());
+          //$log.log("Setting generation: ", StateTracker.getGen());
           StateTracker.setGame(index);
-          $log.log("Setting game: ", StateTracker.getGame());
+          //$log.log("Setting game: ", StateTracker.getGame());
 
           if($state.current.name == "app.welcome") {
-            $log.log("On Welcome screen, move to Generation screen");
+            //$log.log("On Welcome screen, move to Generation screen");
             StateTracker.setCurrentPoke(null);
             $state.go("app.generation");
           }
 
           if($state.current.name == "app.generation") {
-            $log.log("On Generation screen, reload to show changes");
+            //$log.log("On Generation screen, reload to show changes");
             StateTracker.setCurrentPoke(null);
             $state.go("app.generation",null,{reload: true});
           }
 
           if($state.current.name == "app.singlePoke") {
-            $log.log("Viewing a Pokemon, reload with selected Generation");
+            //$log.log("Viewing a Pokemon, reload with selected Generation");
             var tempPoke = StateTracker.getCurrentPoke();
-            $log.log("tempPoke: ", tempPoke);
+            //$log.log("tempPoke: ", tempPoke);
             var testPoke = PokeFetch.getPoke(tempPoke.nationalDex, tempPoke.name, tempPoke.form, StateTracker.getGen());
-            $log.log("testPoke: ", testPoke);
-            StateTracker.setCurrentPoke(testPoke);
-            $state.go("app.singlePoke",null,{reload: true});
+            //$log.log("testPoke: ", testPoke);
+
+            //Choosing something invalid can return an "undefined" poke
+            if(testPoke) {
+              StateTracker.setCurrentPoke(testPoke);
+              $state.go("app.singlePoke",null,{reload: true});
+            }else {
+              //$log.log("Invalid Pokemon chosen, warn the user");
+              $cordovaToast.showLongCenter("This Pokemon doesn't exist in the game you've chosen. Please choose another game, or a different Pokemon!");
+            }
           }
 
           return true;
@@ -217,12 +225,28 @@ angular.module('seiiDex.controllers', [])
   function($scope, $stateParams) {
     var welcome = this;
 
-    welcome.title = "Welcome!";
-    welcome.greeting = "This is the SeiiDex, where you can find information on all 751 current Pokemon.";
-    welcome.instructionsHeader = "How do I use it?";
-    welcome.instructionsContent = "Tap the button at the bottom of the screen, then pick the general group of Pokemon games you're looking for information about. From there, just browse or search to find whatever you need!";
-    welcome.creditHeader = "Credits:";
-    welcome.creditContent = '"Veekun" (https://github.com/veekun/pokedex), whose data is the underpinnings of this entire application.';
+    welcome.viewTitle = "SeiiDex - v0.1";
+
+    welcome.cardGroup = [
+      {title: "Welcome!", contents: ["This is the SeiiDex, where you can find information on all 751 current Pokemon. The SeiiDex is completely local to your device, with no internet connectivity required."], show: false},
+      {title: "How do I use it?", contents: ["Tap the button at the bottom of the screen, then pick the group of Pokemon games that you're looking for information about. From there, just browse or search to find whatever you need!"], show: false},
+      {title: "Credits", contents: ['"Veekun" (https://github.com/veekun/pokedex), whose data is the underpinnings of this entire application.'], show: false}
+    ];
+
+    welcome.toggleGroup = toggleGroup;
+    welcome.isGroupShown = isGroupShown;
+
+    /*
+    * if given group is the selected group, deselect it
+    * else, select the given group
+    */
+    function toggleGroup(group) {
+      group.show = !group.show;
+    };
+
+    function isGroupShown(group) {
+      return group.show;
+    };
   }
 ])
 
@@ -239,23 +263,23 @@ angular.module('seiiDex.controllers', [])
     gen.dataAsArray;
     gen.thisGen = StateTracker.getGen();
     gen.thisGame = StateTracker.getGame();
-    $log.log("Initial generation: ", gen.thisGen);
+    //$log.log("Initial generation: ", gen.thisGen);
     gen.goToPoke = goToPoke;
 
     $scope.$on('$ionicView.enter', function(e) {
       gen.thisGen = StateTracker.getGen();
-      $log.log("Selected generation: ", gen.thisGen);
-      $log.log("Fetching data for Generation " + gen.thisGen);
+      //$log.log("Selected generation: ", gen.thisGen);
+      //$log.log("Fetching data for Generation " + gen.thisGen);
       gen.thisGame = StateTracker.getGame();
-      $log.log("Selected game: ", gen.thisGame);
+      //$log.log("Selected game: ", gen.thisGame);
       gen.data = PokeFetch.getPokeList(gen.thisGen);
-      $log.log("genData: ", gen.data);
+      //$log.log("genData: ", gen.data);
       gen.dataAsArray = PokeFetch.listToArray(gen.data);
-      $log.log("genDataAsArray: ", gen.dataAsArray);
+      //$log.log("genDataAsArray: ", gen.dataAsArray);
     });
 
     function goToPoke(number, name, form) {
-      $log.log("Number: ", number, "Name: ", name, "Form: ", form);
+      //$log.log("Number: ", number, "Name: ", name, "Form: ", form);
       var thisPoke = PokeFetch.getPoke(number, name, form, StateTracker.getGen());
       StateTracker.setCurrentPoke(thisPoke);
       $state.go("app.singlePoke");
@@ -274,19 +298,77 @@ angular.module('seiiDex.controllers', [])
     sp.data;
     sp.thisGen;
 
-    sp.generalHeader = "General:";
-    sp.abilitiesHeader = "Abilities:";
-    sp.evolutionHeader = "Evolution:";
-    sp.statsHeader = "Statistics:";
-    sp.breedingHeader = "Breeding:";
-    sp.evHeader = "Effort Values:";
-    sp.movesHeader = "Moves:";
-    sp.locationsHeader = "Locations:";
+    sp.generalHeader = "General";
+    sp.abilitiesHeader = "Abilities";
+    sp.evolutionHeader = "Evolution";
+    sp.statsHeader = "Statistics";
+    sp.breedingHeader = "Breeding";
+    sp.evHeader = "Effort Values";
+    sp.movesHeader = "Moves";
+    sp.locationsHeader = "Locations";
+
+    sp.showGeneral = false;
+    sp.showAbilities = false;
+    sp.showEvolution = false;
+    sp.showStats = false;
+    sp.showBreeding = false;
+    sp.showEV = false;
+    sp.showMoves = false;
+    sp.showLocation = false;
+
+    sp.toggleGroup = toggleGroup;
+    sp.hideAll = hideAll;
 
     $scope.$on('$ionicView.enter', function(e) {
       sp.data = StateTracker.getCurrentPoke();
-      $log.log("Current Pokemon is: ", sp.data);
+      //$log.log("Current Pokemon is: ", sp.data);
       sp.thisGen = StateTracker.getGen();
     });
+
+    /*
+    * if given group is the selected group, deselect it
+    * else, select the given group
+    */
+    function toggleGroup(group) {
+      switch(group) {
+        case "general":
+          sp.showGeneral = !sp.showGeneral;
+          break;
+        case "abilities":
+          sp.showAbilities = !sp.showAbilities;
+          break;
+        case "evolution":
+          sp.showEvolution = !sp.showEvolution;
+          break;
+        case "stats":
+          sp.showStats = !sp.showStats;
+          break;
+        case "breeding":
+          sp.showBreeding = !sp.showBreeding;
+          break;
+        case "ev":
+          sp.showEV = !sp.showEV;
+          break;
+        case "moves":
+          sp.showMoves = !sp.showMoves;
+          break;
+        case "location":
+          sp.showLocation = !sp.showLocation;
+          break;
+        default:
+          $log.log("Somehow ended up toggling an unrecognized group", group);
+      }
+    };
+
+    function hideAll() {
+      sp.showGeneral = false;
+      sp.showAbilities = false;
+      sp.showEvolution = false;
+      sp.showStats = false;
+      sp.showBreeding = false;
+      sp.showEV = false;
+      sp.showMoves = false;
+      sp.showLocation = false;
+    }
   }
 ]);

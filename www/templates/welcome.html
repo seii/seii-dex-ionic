@@ -1,29 +1,16 @@
-<ion-view view-title="" hide-back-button="true">
+<ion-view view-title="{{welcomeCtrl.viewTitle}}" hide-back-button="true">
   <ion-content>
-    <div class="card">
-      <div class="item item-text-wrap loud">
-        {{welcomeCtrl.title}}
-      </div>
-      <div class="item item-text-wrap">
-        {{welcomeCtrl.greeting}}
-      </div>
-    </div>
-    <div class="card">
-      <div class="item item-text-wrap loud">
-        {{welcomeCtrl.instructionsHeader}}
-      </div>
-      <div class="item item-text-wrap">
-        {{welcomeCtrl.instructionsContent}}
+    <!-- Credit for collapsible card: Author of the CodePen at http://codepen.io/shengoo/pen/bNbvdO/ -->
+    <div ng-repeat="oneCard in welcomeCtrl.cardGroup">
+      <div class="card">
+        <div class="item item-text-wrap loud" ng-click="welcomeCtrl.toggleGroup(oneCard)" ng-class="{active: welcomeCtrl.isGroupShown(oneCard)}">
+          <i class="icon" ng-class="welcomeCtrl.isGroupShown(oneCard) ? 'ion-chevron-down' : 'ion-chevron-right'"></i>
+          {{oneCard.title}}
+        </div>
+        <div class="item item-text-wrap item-accordion" ng-repeat="content in oneCard.contents" ng-show="welcomeCtrl.isGroupShown(oneCard)">
+          {{content}}
+        </div>
       </div>
     </div>
-    <div class="card">
-      <div class="item item-text-wrap loud">
-        {{welcomeCtrl.creditHeader}}
-      </div>
-      <div class="item item-text-wrap">
-        {{welcomeCtrl.creditContent}}
-      </div>
-    </div>
-    <!--<button type="button" ng-click="appCtrl.showMenu()" >Pick</button>-->
   </ion-content>
 </ion-view>
