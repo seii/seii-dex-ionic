@@ -8,15 +8,17 @@ angular.module('seiiDex.services', [])
   '$cordovaZip',
   '$q',
   function($ionicPlatform, $log, $cordovaFile, $cordovaZip, $q) {
-    var ZIP_FILE_NAME = "json.zip";
-    var CDVFILE_PATH_TO_WWW = "cdvfile://localhost/assets/www/";
+    var ft = this;
 
-    var testFile;
-    var copyZipFile;
-    var unzipFiles;
-    var deleteZipFile;
+    ft.ZIP_FILE_NAME = "json.zip";
+    ft.CDVFILE_PATH_TO_WWW = "cdvfile://localhost/assets/www/";
 
-    var fileNameArray = [
+    ft.testFile = testFile;
+    ft.copyZipFile = copyZipFile;
+    ft.unzipFiles = unzipFiles;
+    ft.deleteZipFile = deleteZipFile;
+
+    ft.fileNameArray = [
       'Pokemon1.json',
       'Pokemon2.json',
       'Pokemon3.json',
@@ -26,7 +28,7 @@ angular.module('seiiDex.services', [])
       'Moves.json'
     ];
 
-    testFile = function(file) {
+    function testFile(file) {
       var testFileQ = $q.defer();
 
       $cordovaFile.checkFile(cordova.file.dataDirectory, file)
@@ -45,47 +47,47 @@ angular.module('seiiDex.services', [])
       return testFileQ.promise;
     };
 
-    copyZipFile = function() {
+    function copyZipFile() {
       var copyZipFileQ = $q.defer();
 
-      $cordovaFile.copyFile(CDVFILE_PATH_TO_WWW, ZIP_FILE_NAME, cordova.file.dataDirectory, "")
+      $cordovaFile.copyFile(ft.CDVFILE_PATH_TO_WWW, ft.ZIP_FILE_NAME, cordova.file.dataDirectory, "")
       .then(function (success) {
-        $log.log("Successfully copied " + ZIP_FILE_NAME + " to " + CDVFILE_PATH_TO_WWW);
+        $log.log("Successfully copied " + ft.ZIP_FILE_NAME + " to " + ft.CDVFILE_PATH_TO_WWW);
         copyZipFileQ.resolve(success);
       }, function (error) {
-        $log.log("Failed to copy " + ZIP_FILE_NAME + " to " + CDVFILE_PATH_TO_WWW);
+        $log.log("Failed to copy " + ft.ZIP_FILE_NAME + " to " + ft.CDVFILE_PATH_TO_WWW);
         copyZipFileQ.reject(error);
       });
 
       return copyZipFileQ.promise;
     };
 
-    unzipFiles = function() {
+    function unzipFiles() {
       var unzipFileQ = $q.defer();
 
       $cordovaZip.unzip(
-        cordova.file.dataDirectory + ZIP_FILE_NAME,
+        cordova.file.dataDirectory + ft.ZIP_FILE_NAME,
         cordova.file.dataDirectory
       ).then(function (success) {
-        $log.log("Successfully unzipped " + ZIP_FILE_NAME + " to " + CDVFILE_PATH_TO_WWW, success);
+        $log.log("Successfully unzipped " + ft.ZIP_FILE_NAME + " to " + ft.CDVFILE_PATH_TO_WWW, success);
         unzipFileQ.resolve(success);
       }, function (error) {
-        $log.log("Failed to unzip " + ZIP_FILE_NAME + " to " + CDVFILE_PATH_TO_WWW, error);
+        $log.log("Failed to unzip " + ft.ZIP_FILE_NAME + " to " + ft.CDVFILE_PATH_TO_WWW, error);
         unzipFileQ.reject(error);
       });
 
       return unzipFileQ.promise;
     };
 
-    deleteZipFile = function() {
+    function deleteZipFile() {
       var deleteZipFileQ = $q.defer();
 
-      $cordovaFile.removeFile(cordova.file.dataDirectory, ZIP_FILE_NAME)
+      $cordovaFile.removeFile(cordova.file.dataDirectory, ft.ZIP_FILE_NAME)
       .then(function (success) {
-        $log.log("Successfully deleted " + ZIP_FILE_NAME + " from " + CDVFILE_PATH_TO_WWW, success.fileRemoved.name);
+        $log.log("Successfully deleted " + ft.ZIP_FILE_NAME + " from " + ft.CDVFILE_PATH_TO_WWW, success.fileRemoved.name);
         deleteZipFileQ.resolve(success);
       }, function (error) {
-        $log.log("Failed to delete " + ZIP_FILE_NAME + " from " + CDVFILE_PATH_TO_WWW, error);
+        $log.log("Failed to delete " + ft.ZIP_FILE_NAME + " from " + ft.CDVFILE_PATH_TO_WWW, error);
         deleteZipFileQ.reject(error);
       });
 
@@ -98,7 +100,7 @@ angular.module('seiiDex.services', [])
 
         return $ionicPlatform.ready()
         .then(function() {
-          angular.forEach(fileNameArray, function(currentFile) {
+          angular.forEach(ft.fileNameArray, function(currentFile) {
             $log.log("Checking for file: ", currentFile);
             fileTestResults.push(testFile(currentFile));
           });
@@ -145,7 +147,7 @@ angular.module('seiiDex.services', [])
       "Black/White",
       "Black 2/White 2",
       "X/Y",
-      "Alpha Sapphire/Omega Ruby"
+      "Omega Ruby/Alpha Sapphire"
     ];
 
     return {
@@ -180,10 +182,13 @@ angular.module('seiiDex.services', [])
     var pf = this;
 
     pf.pokeData;
+    pf.moveData;
 
     return {
       initList: function(dataArray) {
         pf.pokeData = dataArray;
+        pf.moveData = pf.pokeData[pf.pokeData.length - 1];
+        //$log.log("moveData: ", pf.moveData);
       },
       getPokeList: function(generation) {
         return pf.pokeData[generation - 1];
@@ -200,6 +205,11 @@ angular.module('seiiDex.services', [])
         });
 
         return tempArray;
+      },
+      getMove: function(moveId) {
+        var thisMove = pf.moveData[moveId];
+
+        return thisMove;
       }
     }
   }

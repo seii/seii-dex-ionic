@@ -1,6 +1,7 @@
 <ion-view view-title="{{genCtrl.thisGame}}">
   <ion-content>
     <ion-list>
+      <!-- TODO: Add filter bar for search-as-you-go functionality -->
       <ion-item collection-repeat="poke in genCtrl.dataAsArray" ng-click="genCtrl.goToPoke(poke.nationalDex + '', poke.name + '', poke.form + '')">
         {{poke.nationalDex}} - {{poke.name}}
       </ion-item>

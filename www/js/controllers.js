@@ -181,6 +181,23 @@ angular.module('seiiDex.controllers', [])
             }
           }
 
+          if($state.current.name == "app.pokeMoves") {
+            //$log.log("Viewing a Pokemon, reload with selected Generation");
+            var tempPoke = StateTracker.getCurrentPoke();
+            //$log.log("tempPoke: ", tempPoke);
+            var testPoke = PokeFetch.getPoke(tempPoke.nationalDex, tempPoke.name, tempPoke.form, StateTracker.getGen());
+            //$log.log("testPoke: ", testPoke);
+
+            //Choosing something invalid can return an "undefined" poke
+            if(testPoke) {
+              StateTracker.setCurrentPoke(testPoke);
+              $state.go("app.pokeMoves",null,{reload: true});
+            }else {
+              //$log.log("Invalid Pokemon chosen, warn the user");
+              $cordovaToast.showLongCenter("This Pokemon doesn't exist in the game you've chosen. Please choose another game, or a different Pokemon!");
+            }
+          }
+
           return true;
         }
       });
@@ -230,6 +247,7 @@ angular.module('seiiDex.controllers', [])
     welcome.cardGroup = [
       {title: "Welcome!", contents: ["This is the SeiiDex, where you can find information on all 751 current Pokemon. The SeiiDex is completely local to your device, with no internet connectivity required."], show: false},
       {title: "How do I use it?", contents: ["Tap the button at the bottom of the screen, then pick the group of Pokemon games that you're looking for information about. From there, just browse or search to find whatever you need!"], show: false},
+      {title: "What games are supported?", contents: ['This app uses outside database info (see the Credits) to display all games up through X/Y. ORAS isn\'t fully supported yet, so some things like "Wild Encounters" will be blank for ORAS.'], show: false},
       {title: "Credits", contents: ['"Veekun" (https://github.com/veekun/pokedex), whose data is the underpinnings of this entire application.'], show: false}
     ];
 
@@ -292,7 +310,8 @@ angular.module('seiiDex.controllers', [])
   '$log',
   'PokeFetch',
   'StateTracker',
-  function($scope, $log, PokeFetch, StateTracker) {
+  '$state',
+  function($scope, $log, PokeFetch, StateTracker, $state) {
     var sp = this;
 
     sp.data;
@@ -305,7 +324,7 @@ angular.module('seiiDex.controllers', [])
     sp.breedingHeader = "Breeding";
     sp.evHeader = "Effort Values";
     sp.movesHeader = "Moves";
-    sp.locationsHeader = "Locations";
+    sp.locationsHeader = "Wild Encounters";
 
     sp.showGeneral = false;
     sp.showAbilities = false;
@@ -314,10 +333,13 @@ angular.module('seiiDex.controllers', [])
     sp.showBreeding = false;
     sp.showEV = false;
     sp.showMoves = false;
+    sp.showMovesCategory = false;
+    sp.showMovesType = false;
     sp.showLocation = false;
 
     sp.toggleGroup = toggleGroup;
     sp.hideAll = hideAll;
+    sp.goToMoves = goToMoves;
 
     $scope.$on('$ionicView.enter', function(e) {
       sp.data = StateTracker.getCurrentPoke();
@@ -352,6 +374,12 @@ angular.module('seiiDex.controllers', [])
         case "moves":
           sp.showMoves = !sp.showMoves;
           break;
+        case 'movecategory':
+          sp.showMovesCategory = !sp.showMovesCategory;
+          break;
+        case 'movetype':
+          sp.showMovesType = !sp.showMovesType;
+          break;
         case "location":
           sp.showLocation = !sp.showLocation;
           break;
@@ -370,5 +398,231 @@ angular.module('seiiDex.controllers', [])
       sp.showMoves = false;
       sp.showLocation = false;
     }
+
+    function goToMoves() {
+      $log.log("Moving!");
+      $state.go("app.pokeMoves");
+    }
+  }
+])
+
+.controller('PokeMovesCtrl', [
+  '$scope',
+  '$log',
+  'PokeFetch',
+  'StateTracker',
+  function($scope, $log, PokeFetch, StateTracker) {
+    var mv = this;
+
+    mv.data;
+    mv.shownGroup;
+    mv.shownSubGroup;
+    mv.transformedMoves;
+
+    mv.movesHeader = "Moves";
+    mv.moveTypeArray = [];
+    mv.levelUpMoves = "levelUpMoves";
+    mv.machineMoves = "machineMoves";
+    mv.eggMoves = "eggMoves";
+    mv.tutorMoves = "tutorMoves";
+
+    mv.toggleGroup = toggleGroup;
+    mv.isGroupShown = isGroupShown;
+    mv.toggleSubGroup = toggleSubGroup;
+    mv.isSubGroupShown = isSubGroupShown;
+    mv.parseMoveType = parseMoveType;
+    mv.narrowMovesToThisGame = narrowMovesToThisGame;
+    mv.transformMoveData = transformMoveData;
+    mv.isEmptyObject = isEmptyObject;
+
+    $scope.$on('$ionicView.enter', function(e) {
+      mv.data = StateTracker.getCurrentPoke();
+      //$log.log("Current Pokemon is: ", sp.data);
+      mv.thisGen = StateTracker.getGen();
+      mv.thisGame = StateTracker.getGame();
+      mv.transformedMoves = mv.narrowMovesToThisGame(mv.data.moves);
+      mv.transformedMoves = mv.transformMoveData(mv.transformedMoves);
+      $log.log("transformedMoves: ", mv.transformedMoves);
+    });
+
+    /*
+     * if given group is the selected group, deselect it
+     * else, select the given group
+     */
+    function toggleGroup(group) {
+      if (mv.isGroupShown(group)) {
+        mv.shownGroup = null;
+      } else {
+        mv.shownGroup = group;
+        mv.shownSubGroup = null;
+      }
+    };
+
+    function isGroupShown(group) {
+      return mv.shownGroup === group;
+    };
+
+    function toggleSubGroup(group) {
+      if (mv.isSubGroupShown(group)) {
+        mv.shownSubGroup = null;
+      } else {
+        mv.shownSubGroup = group;
+      }
+    };
+
+    function isSubGroupShown(group) {
+      return mv.shownSubGroup === group;
+    };
+
+    function parseMoveType(moveType) {
+      //$log.log("Move type:", moveType);
+      if (moveType == mv.levelUpMoves) {
+        return 'Learned From Leveling';
+      }else if (moveType == mv.machineMoves) {
+        return 'Learned From TM/HM';
+      }else if (moveType == mv.eggMoves) {
+        return 'Learned From Breeding';
+      }else if (moveType == mv.tutorMoves) {
+        return 'Learned From Move Tutor';
+      }else {
+        return moveType;
+      }
+    }
+
+    function narrowMovesToThisGame(moveData) {
+      //$log.log("narrowMovesToThisGame data: ", moveData);
+
+      var relevantGame = {};
+
+      var thisGame = StateTracker.getGame();
+      $log.log("thisGame: ", thisGame);
+
+      angular.forEach(moveData, function(value, key) {
+        $log.log("key: ", key);
+
+        //Match exactly or partially
+        if(thisGame == key || ~thisGame.indexOf(key)) {
+          relevantGame[key] = value;
+        }
+      });
+
+      //$log.log("final narrowed data: ", relevantGame);
+
+      return relevantGame;
+    }
+
+    function transformMoveData(moveData) {
+      //$log.log("transformMoveData start: ", moveData);
+
+      var modMoveData = {};
+
+      angular.forEach(moveData, function(gameValue, gameKey) {
+        //$log.log("moveData: ", gameKey, gameValue);
+
+        var gameName = gameKey;
+        modMoveData[gameName] = {};
+
+        angular.forEach(gameValue, function(catValue, catKey) {
+          if(catKey == mv.levelUpMoves) {
+            var tempLevelMoves = catValue;
+
+            angular.forEach(catValue, function(value, key) {
+              var levelSplit = key.split("-");
+              //Only the actual level matters, not the ordering
+              var level = levelSplit[0];
+
+              var moveObj = PokeFetch.getMove(parseInt(value));
+              moveObj.levelPretty = level;
+
+              tempLevelMoves[key] = moveObj;
+            });
+
+            modMoveData[gameName][mv.parseMoveType(mv.levelUpMoves)] = tempLevelMoves;
+          }else if(catKey == mv.machineMoves) {
+            var tempMachineMoves = catValue;
+
+            angular.forEach(catValue, function(value, key) {
+              var moveObj = PokeFetch.getMove(parseInt(value));
+              moveObj.machinePretty = key;
+
+              tempMachineMoves[key] = moveObj;
+            });
+
+            modMoveData[gameName][mv.parseMoveType(mv.machineMoves)] = tempMachineMoves;
+          }else {
+            modMoveData[gameName][mv.parseMoveType(catKey)] = {};
+
+            angular.forEach(catValue, function(value, key) {
+              modMoveData[gameName][mv.parseMoveType(catKey)][key] = PokeFetch.getMove(parseInt(value));
+            });
+          }
+        });
+      });
+
+      //$log.log("transformMoveData end: ", modMoveData);
+
+      return modMoveData;
+    }
+
+    function isEmptyObject(testObj) {
+      return angular.equals({}, testObj);
+    }
+  }
+])
+
+.controller('PokeLocationsCtrl', [
+  '$scope',
+  '$log',
+  'PokeFetch',
+  'StateTracker',
+  function($scope, $log, PokeFetch, StateTracker) {
+    var loc = this;
+
+    loc.data;
+
+    loc.shownGroup;
+    loc.shownSubGroup;
+
+    loc.locationsHeader = "Wild Encounters";
+
+    loc.toggleGroup = toggleGroup;
+    loc.isGroupShown = isGroupShown;
+    loc.toggleSubGroup = toggleSubGroup;
+    loc.isSubGroupShown = isSubGroupShown;
+
+    $scope.$on('$ionicView.enter', function(e) {
+      loc.data = StateTracker.getCurrentPoke();
+      //$log.log("Current Pokemon is: ", sp.data);
+      loc.thisGen = StateTracker.getGen();
+    });
+
+    /*
+     * if given group is the selected group, deselect it
+     * else, select the given group
+     */
+    function toggleGroup(group) {
+      if (loc.isGroupShown(group)) {
+        loc.shownGroup = null;
+      } else {
+        loc.shownGroup = group;
+        loc.shownSubGroup = null;
+      }
+    };
+
+    function isGroupShown(group) {
+      return loc.shownGroup === group;
+    };
+
+    function toggleSubGroup(group) {
+      if (loc.isSubGroupShown(group)) {
+        loc.shownSubGroup = null;
+      } else {
+        loc.shownSubGroup = group;
+      }
+    };
+
+    function isSubGroupShown(group) {
+      return loc.shownSubGroup === group;
+    };
   }
 ]);

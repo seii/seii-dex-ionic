@@ -68,7 +68,7 @@
         <div>Special: {{spCtrl.data.stats.specialAttack}}</div>
         <div>Speed: {{spCtrl.data.stats.speed}}</div>
       </div>
-      <div ng-if="spCtrl.thisGen > 1" class="item item-text-wrap">
+      <div ng-if="spCtrl.thisGen > 1" class="item item-text-wrap item-accordion" ng-show="spCtrl.showStats">
         <div>HP: {{spCtrl.data.stats.hp}}</div>
         <div>Attack: {{spCtrl.data.stats.attack}}</div>
         <div>Defense: {{spCtrl.data.stats.defense}}</div>
@@ -110,27 +110,15 @@
     </div>
     <!-- MOVES -->
     <div class="card">
-      <div class="item item-text-wrap loud" ng-click="spCtrl.toggleGroup('moves')" ng-class="{active: spCtrl.showMoves}">
-        <i class="icon" ng-class="spCtrl.showMoves ? 'ion-chevron-down' : 'ion-chevron-right'"></i>
+      <div class="item item-text-wrap loud icon-right ion-chevron-right" ui-sref="app.pokeMoves">
         {{spCtrl.movesHeader}}
       </div>
-      <!--<div ng-repeat="(move.name, move.level) in spCtrl.data.evolution" class="item item-text-wrap">
-        <div>Method: {{evo.methodExplanation}}</div>
-        <div>Evolves Into: {{evo.nationalDex}} - {{evo.name}}</div>
-      </div>-->
-      <div class="item item-text-wrap item-accordion" ng-show="spCtrl.showMoves">TODO</div>
     </div>
-    <!-- LOCATIONS -->
+    <!-- WILD ENCOUNTERS -->
     <div class="card">
-      <div class="item item-text-wrap loud" ng-click="spCtrl.toggleGroup('location')" ng-class="{active: spCtrl.showLocation}">
-        <i class="icon" ng-class="spCtrl.showLocation ? 'ion-chevron-down' : 'ion-chevron-right'"></i>
+      <div class="item item-text-wrap loud icon-right ion-chevron-right" ui-sref="app.pokeLocations">
         {{spCtrl.locationsHeader}}
       </div>
-      <!--<div ng-repeat="(move.name, move.level) in spCtrl.data.evolution" class="item item-text-wrap">
-        <div>Method: {{evo.methodExplanation}}</div>
-        <div>Evolves Into: {{evo.nationalDex}} - {{evo.name}}</div>
-      </div>-->
-      <div class="item item-text-wrap item-accordion" ng-show="spCtrl.showLocation">TODO</div>
     </div>
   </ion-content>
 </ion-view>

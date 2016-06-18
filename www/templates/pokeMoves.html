@@ -1,0 +1,52 @@
+<ion-view view-title="{{mvCtrl.data.nationalDex}} - {{mvCtrl.data.name}}">
+  <ion-content>
+    <ion-list>
+      <ion-item class="item-divider loud">
+        Movesets
+      </ion-item>
+      <div ng-repeat="(gameGen, unusedVal) in mvCtrl.transformedMoves">
+        <ion-item class="item-divider item-text-wrap" ng-if="mvCtrl.isEmptyObject(mvCtrl.transformedMoves[gameGen])">
+          No moves found for this Pokemon in this game.<br />
+          This is a rare case, most commonly occurring when a Pokemon is introduced within a later game that still shares the same "generation".
+        </ion-item>
+        <ion-item class="item-divider" ng-click="mvCtrl.toggleGroup(gameGen)" ng-class="{active: mvCtrl.isGroupShown(gameGen)}" ng-if="!mvCtrl.isEmptyObject(mvCtrl.transformedMoves[gameGen])">
+          <i class="icon" ng-class="mvCtrl.isGroupShown(gameGen) ? 'ion-minus' : 'ion-plus'"></i>
+          {{gameGen}}
+        </ion-item>
+        <ion-item ng-repeat="(moveCategory, moveList) in mvCtrl.transformedMoves[gameGen]" class="item-accordion" ng-show="mvCtrl.isGroupShown(gameGen)" ng-if="!mvCtrl.isEmptyObject(mvCtrl.transformedMoves[gameGen])">
+          <ion-item class="item-divider no-side-borders add-vertical-padding" ng-click="mvCtrl.toggleSubGroup(moveCategory)" ng-class="{active: mvCtrl.isSubGroupShown(moveCategory)}">
+            <i class="icon" ng-class="mvCtrl.isSubGroupShown(moveCategory) ? 'ion-minus' : 'ion-plus'"></i>
+            {{moveCategory}}
+          </ion-item>
+          <ion-item ng-repeat="moveContent in mvCtrl.transformedMoves[gameGen][moveCategory]" class="item-accordion item-text-wrap no-side-borders center-text add-vertical-padding" ng-show="mvCtrl.isSubGroupShown(moveCategory)">
+            <div ng-if="moveContent.levelPretty" class="loud">
+              Level {{moveContent.levelPretty}}
+            </div>
+            <div ng-if="moveContent.machinePretty" class="loud">
+              {{moveContent.machinePretty}}
+            </div>
+            <div class="row">
+              <div class="col">
+                <span class="loud">Name:</span><br/>{{moveContent.moveName}}
+              </div>
+              <div class="col">
+                <span class="loud">Type:</span><br />{{moveContent.moveType}}
+              </div>
+            </div>
+            <div class="row">
+              <div class="col">
+                <span class="loud">Power:</span><br />{{moveContent.movePower}}
+              </div>
+              <div class="col">
+                <span class="loud">PP:</span><br />{{moveContent.movePP}}
+              </div>
+            </div>
+            <div>
+              <span class="loud">Effect:</span><br />{{moveContent.moveEffect}}
+            </div>
+          </ion-item>
+        </ion-item>
+      </div>
+    </ion-list>
+  </ion-content>
+</ion-view>

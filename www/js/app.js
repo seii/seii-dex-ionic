@@ -70,6 +70,26 @@ angular.module('seiiDex', ['ionic', 'seiiDex.controllers', 'seiiDex.services', '
         controller: 'SinglePokeCtrl as spCtrl'
       }
     }
+  })
+
+  .state('app.pokeMoves', {
+    url: '/pokeMoves',
+    views: {
+      'menuContent': {
+        templateUrl: 'templates/pokeMoves.html',
+        controller: 'PokeMovesCtrl as mvCtrl'
+      }
+    }
+  })
+
+  .state('app.pokeLocations', {
+    url: '/pokeLocations',
+    views: {
+      'menuContent': {
+        templateUrl: 'templates/pokeLocations.html',
+        controller: 'PokeLocationsCtrl as locCtrl'
+      }
+    }
   });
   // if none of the above states are matched, use this as the fallback
   $urlRouterProvider.otherwise('/app/welcome');
