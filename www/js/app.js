@@ -6,10 +6,13 @@
 // the 2nd parameter is an array of 'requires'
 // 'seiiDex.controllers' is found in controllers.js
 // 'seiiDex.factories' is found in factories.js
-angular.module('seiiDex', ['ionic', 'seiiDex.controllers', 'seiiDex.services', 'ngCordova'])
+// 'seiiDex.constants' is found in constants.js
+// 'seiiDex.filters' is found in filters.js
+angular.module('seiiDex', ['ionic', 'seiiDex.controllers', 'seiiDex.services', 'seiiDex.constants', 'seiiDex.filters', 'ngCordova'])
 
 .run(function($ionicPlatform) {
   $ionicPlatform.ready(function() {
+
     // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
     // for form inputs)
     if (window.cordova && window.cordova.plugins.Keyboard) {
@@ -24,7 +27,9 @@ angular.module('seiiDex', ['ionic', 'seiiDex.controllers', 'seiiDex.services', '
   });
 })
 
-.config(function($stateProvider, $urlRouterProvider) {
+.config(function($logProvider, $stateProvider, $urlRouterProvider) {
+  $logProvider.debugEnabled(false);
+
   $stateProvider
 
   .state('loadScreen', {

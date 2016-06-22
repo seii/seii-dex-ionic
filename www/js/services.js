@@ -1,6 +1,54 @@
 "use strict";
 angular.module('seiiDex.services', [])
 
+.service('PreferenceManager',
+  ['$ionicPlatform',
+  '$log',
+  '$cordovaPreferences',
+  'SeiiDexVersion',
+  function($ionicPlatform, $log, $cordovaPreferences, SeiiDexVersion) {
+    var pm = this;
+
+    pm.storeVersion = storeVersion;
+    pm.getVersion = getVersion;
+
+    function storeVersion() {
+      return $cordovaPreferences.store('seiiDexVersion', SeiiDexVersion)
+        .success(function(value) {
+          $log.log("Successfully stored app version in shared preferences " + value);
+        })
+        .error(function(error) {
+          $log.log("Failed to store app version in shared preferences " + error);
+        })
+    }
+
+    function getVersion() {
+      return $cordovaPreferences.fetch('seiiDexVersion')
+        .success(function(value) {
+          $log.log("Retrieved version from shared preferences: ", value);
+        })
+        .error(function(error) {
+          $log.log("Failed to retrieve version from shared preferences ", error);
+        })
+    }
+
+    return {
+      storeVersion : function() {
+        return $ionicPlatform.ready()
+        .then(function () {
+          return pm.storeVersion();
+        });
+      },
+      getVersion : function() {
+        return $ionicPlatform.ready()
+        .then(function () {
+          return pm.getVersion();
+        });
+      }
+    };
+  }
+])
+
 .service('FileTester',
   ['$ionicPlatform',
   '$log',
@@ -34,12 +82,12 @@ angular.module('seiiDex.services', [])
       $cordovaFile.checkFile(cordova.file.dataDirectory, file)
       .then(function (success) {
         // success
-        $log.log("File " + file + " already exists, skipping unzip step\n", success);
+        $log.log("File " + file + " already exists\n", success);
 
         testFileQ.resolve(success);
       }, function (error) {
         // error
-        $log.log("File " + file + " doesn't exist, unzipping JSON files\n", error);
+        $log.log("File " + file + " doesn't exist\n", error);
 
         testFileQ.reject(error);
       });
@@ -52,10 +100,10 @@ angular.module('seiiDex.services', [])
 
       $cordovaFile.copyFile(ft.CDVFILE_PATH_TO_WWW, ft.ZIP_FILE_NAME, cordova.file.dataDirectory, "")
       .then(function (success) {
-        $log.log("Successfully copied " + ft.ZIP_FILE_NAME + " to " + ft.CDVFILE_PATH_TO_WWW);
+        $log.log("Successfully copied " + ft.ZIP_FILE_NAME + " to " + ft.CDVFILE_PATH_TO_WWW, success);
         copyZipFileQ.resolve(success);
       }, function (error) {
-        $log.log("Failed to copy " + ft.ZIP_FILE_NAME + " to " + ft.CDVFILE_PATH_TO_WWW);
+        $log.log("Failed to copy " + ft.ZIP_FILE_NAME + " to " + ft.CDVFILE_PATH_TO_WWW, error);
         copyZipFileQ.reject(error);
       });
 
@@ -69,10 +117,10 @@ angular.module('seiiDex.services', [])
         cordova.file.dataDirectory + ft.ZIP_FILE_NAME,
         cordova.file.dataDirectory
       ).then(function (success) {
-        $log.log("Successfully unzipped " + ft.ZIP_FILE_NAME + " to " + ft.CDVFILE_PATH_TO_WWW, success);
+        $log.log("Successfully unzipped " + ft.ZIP_FILE_NAME + " to " + cordova.file.dataDirectory, success);
         unzipFileQ.resolve(success);
       }, function (error) {
-        $log.log("Failed to unzip " + ft.ZIP_FILE_NAME + " to " + ft.CDVFILE_PATH_TO_WWW, error);
+        $log.log("Failed to unzip " + ft.ZIP_FILE_NAME + " to " + cordova.file.dataDirectory, error);
         unzipFileQ.reject(error);
       });
 
@@ -84,10 +132,10 @@ angular.module('seiiDex.services', [])
 
       $cordovaFile.removeFile(cordova.file.dataDirectory, ft.ZIP_FILE_NAME)
       .then(function (success) {
-        $log.log("Successfully deleted " + ft.ZIP_FILE_NAME + " from " + ft.CDVFILE_PATH_TO_WWW, success.fileRemoved.name);
+        $log.log("Successfully deleted " + ft.ZIP_FILE_NAME + " from " + cordova.file.dataDirectory, success);
         deleteZipFileQ.resolve(success);
       }, function (error) {
-        $log.log("Failed to delete " + ft.ZIP_FILE_NAME + " from " + ft.CDVFILE_PATH_TO_WWW, error);
+        $log.log("Failed to delete " + ft.ZIP_FILE_NAME + " from " + cordova.file.dataDirectory, error);
         deleteZipFileQ.reject(error);
       });
 
@@ -110,16 +158,17 @@ angular.module('seiiDex.services', [])
       },
       createFiles: function() {
 
-        return $ionicPlatform.ready().then(function() {
+        return $ionicPlatform.ready()
+        .then(function() {
           $log.log("Platform is ready for file creation via Cordova plugins");
-          $log.log("Attempting to copy ZIP file");
-          return copyZipFile()
+          $log.log("Attempting to copy initial ZIP file");
+          return ft.copyZipFile()
           .then(function(copyFileResult) {
             $log.log("Attempting to unzip base file");
-            return unzipFiles();
+            return ft.unzipFiles();
           })
           .then(function(unzipFileResult) {
-            $log.log("Attempting to delete ZIP file");
+            $log.log("Attempting to delete initial ZIP file");
             return deleteZipFile();
           });
         });
@@ -188,7 +237,7 @@ angular.module('seiiDex.services', [])
       initList: function(dataArray) {
         pf.pokeData = dataArray;
         pf.moveData = pf.pokeData[pf.pokeData.length - 1];
-        //$log.log("moveData: ", pf.moveData);
+        $log.debug("moveData: ", pf.moveData);
       },
       getPokeList: function(generation) {
         return pf.pokeData[generation - 1];

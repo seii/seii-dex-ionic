@@ -9,7 +9,9 @@ angular.module('seiiDex.controllers', [])
   '$http',
   '$q',
   '$ionicHistory',
-  function($scope, $log, FileTester, PokeFetch, $http, $q, $ionicHistory) {
+  'PreferenceManager',
+  'SeiiDexVersion',
+  function($scope, $log, FileTester, PokeFetch, $http, $q, $ionicHistory, PreferenceManager, SeiiDexVersion) {
     var ls = this;
 
     ls.finishedLoading;
@@ -19,9 +21,10 @@ angular.module('seiiDex.controllers', [])
     ls.loadStatus = "Loading initial files...";
 
     ls.initialize = initialize;
+    ls.loadCachedFiles = loadCachedFiles;
+    ls.createNewFiles = createNewFiles;
     ls.testFiles = testFiles;
     ls.loadFilesIntoScope = loadFilesIntoScope;
-    ls.createFiles = createFiles;
 
     ls.initialize();
 
@@ -31,25 +34,79 @@ angular.module('seiiDex.controllers', [])
     });
 
     function initialize() {
-      FileTester.checkFiles()
-      .then(function(results) { return ls.testFiles(results); })
-      .then(function(results) { return ls.loadFilesIntoScope(results); })
-      .catch(function(error) {
-        $log.log("Error while loading files: ", error.message);
-        ls.loadStatus = "One or more required files are missing, attempting to create them...";
-        ls.loopDetector++;
-        $log.log("loopDetector: ", ls.loopDetector);
+      /*
+       * When checking the version, "success" still requires finding out if
+       * the current version is obsolete. "failure" definitely means the
+       * shared preference has never been set or has been cleared, and either
+       * way the shared preference must be set.
+       */
+      PreferenceManager.getVersion()
+      .then(function(version) {
+        $log.debug("Version stored in Shared Preferences: ", version);
 
-        //Quick and dirty way to prevent an infinite loop if there's a persistent error
-        if(ls.loopDetector < 2) {
-          ls.createFiles();
+        //App has been updated, create new files
+        if(version < SeiiDexVersion) {
+          $log.log("Current version is out of date, beginning app update...");
+
+          PreferenceManager.storeVersion(SeiiDexVersion)
+          .then(function(result) {
+            ls.createNewFiles();
+          });
         }else {
-          $log.log("Failed to create files, loading loop detected");
-          ls.loadScreenTitle = "Uh Oh!";
-          ls.loadStatus = "One or more required files could not be created. As a result, this app can't continue operation. Please try exiting and re-launching the app. If that does not fix this problem, please reinstall the app.";
+          $log.log("App is up to date, continuing...");
+
+          //App has not been updated, try to load cached files
+          FileTester.checkFiles()
+          .then(function(results) { return loadCachedFiles(results); })
+          //Cached files are damaged or missing, create new files
+          .catch(function(error) {
+            $log.log("Failed to load cached files: ", error);
+            return createNewFiles();
+          });
         }
+      })
+      //App has no version set, reload after setting it
+      .catch(function(error) {
+        $log.log("No version found in shared preferences, setting it now ", error);
+        PreferenceManager.storeVersion(SeiiDexVersion)
+        .then(function(result) {
+          $log.log("Version stored: ", result);
+          ls.initialize();
+        });
       });
-    };
+    }
+
+    function loadCachedFiles(cachedFiles) {
+      $log.log("Attempting to load cached files");
+      return ls.testFiles(cachedFiles)
+              .then(function(results) { return ls.loadFilesIntoScope(results); });
+    }
+
+    function createNewFiles() {
+      $log.log("Attempting to create new files");
+      ls.loadStatus = "One or more required files are missing, attempting to create them...";
+      ls.loopDetector++;
+      $log.log("loopDetector: ", ls.loopDetector);
+
+      //Quick and dirty way to prevent an infinite loop if there's a persistent error
+      if(ls.loopDetector < 2) {
+        ls.loadScreenTitle = "Creating...";
+        ls.loadStatus = "Creating required files...";
+
+        FileTester.createFiles()
+        .then(function(result) {
+          $log.log("Successfully created files: ", result);
+          ls.loadScreenTitle = "Created!";
+          ls.loadStatus = "Successfully created files!";
+          $log.log("Attempting to initialize again");
+          ls.initialize();
+        });
+      }else {
+        $log.log("Failed to create files, loading loop detected");
+        ls.loadScreenTitle = "Uh Oh!";
+        ls.loadStatus = "One or more required files could not be created. As a result, this app can't continue operation. Please try exiting and re-launching the app. If that does not fix this problem, please reinstall the app.";
+      }
+    }
 
     function testFiles(results) {
 
@@ -64,7 +121,7 @@ angular.module('seiiDex.controllers', [])
       });
 
       return $q.all(checkFileResults);
-    };
+    }
 
     function loadFilesIntoScope(results) {
       $log.log("Loading into scope: ", results);
@@ -73,21 +130,6 @@ angular.module('seiiDex.controllers', [])
       ls.loadScreenTitle = "Finished!";
       ls.loadStatus = "Successfully loaded " + results.length + " files!";
       ls.finishedLoading = true;
-    };
-
-    function createFiles() {
-      $log.log("Attempting to create files");
-      ls.loadScreenTitle = "Creating...";
-      ls.loadStatus = "Creating required files...";
-
-      FileTester.createFiles()
-      .then(function(result) {
-        $log.log("Success: ", result);
-        ls.loadScreenTitle = "Created!";
-        ls.loadStatus = "Successfully created files!";
-        $log.log("Attempting to initialize again");
-        ls.initialize();
-      });
     }
   }
 ])
@@ -146,54 +188,71 @@ angular.module('seiiDex.controllers', [])
         },
         cssClass: "game-actionsheet",
         buttonClicked: function(index) {
-          //$log.log("Button clicked: ", index);
+          $log.debug("Button clicked: ", index);
           StateTracker.setGen(app.parseButtons(index));
-          //$log.log("Setting generation: ", StateTracker.getGen());
+          $log.debug("Setting generation: ", StateTracker.getGen());
           StateTracker.setGame(index);
-          //$log.log("Setting game: ", StateTracker.getGame());
+          $log.debug("Setting game: ", StateTracker.getGame());
 
           if($state.current.name == "app.welcome") {
-            //$log.log("On Welcome screen, move to Generation screen");
+            $log.debug("On Welcome screen, move to Generation screen");
             StateTracker.setCurrentPoke(null);
             $state.go("app.generation");
           }
 
           if($state.current.name == "app.generation") {
-            //$log.log("On Generation screen, reload to show changes");
+            $log.debug("On Generation screen, reload to show changes");
             StateTracker.setCurrentPoke(null);
             $state.go("app.generation",null,{reload: true});
           }
 
           if($state.current.name == "app.singlePoke") {
-            //$log.log("Viewing a Pokemon, reload with selected Generation");
+            $log.debug("Viewing a Pokemon, reload with selected Generation");
             var tempPoke = StateTracker.getCurrentPoke();
-            //$log.log("tempPoke: ", tempPoke);
+            $log.debug("tempPoke: ", tempPoke);
             var testPoke = PokeFetch.getPoke(tempPoke.nationalDex, tempPoke.name, tempPoke.form, StateTracker.getGen());
-            //$log.log("testPoke: ", testPoke);
+            $log.debug("testPoke: ", testPoke);
 
             //Choosing something invalid can return an "undefined" poke
             if(testPoke) {
               StateTracker.setCurrentPoke(testPoke);
               $state.go("app.singlePoke",null,{reload: true});
             }else {
-              //$log.log("Invalid Pokemon chosen, warn the user");
+              $log.debug("Invalid Pokemon chosen, warn the user");
               $cordovaToast.showLongCenter("This Pokemon doesn't exist in the game you've chosen. Please choose another game, or a different Pokemon!");
             }
           }
 
           if($state.current.name == "app.pokeMoves") {
-            //$log.log("Viewing a Pokemon, reload with selected Generation");
+            $log.debug("Viewing a Pokemon, reload with selected Generation");
             var tempPoke = StateTracker.getCurrentPoke();
-            //$log.log("tempPoke: ", tempPoke);
+            $log.debug("tempPoke: ", tempPoke);
             var testPoke = PokeFetch.getPoke(tempPoke.nationalDex, tempPoke.name, tempPoke.form, StateTracker.getGen());
-            //$log.log("testPoke: ", testPoke);
+            $log.debug("testPoke: ", testPoke);
 
             //Choosing something invalid can return an "undefined" poke
             if(testPoke) {
               StateTracker.setCurrentPoke(testPoke);
               $state.go("app.pokeMoves",null,{reload: true});
             }else {
-              //$log.log("Invalid Pokemon chosen, warn the user");
+              $log.debug("Invalid Pokemon chosen, warn the user");
+              $cordovaToast.showLongCenter("This Pokemon doesn't exist in the game you've chosen. Please choose another game, or a different Pokemon!");
+            }
+          }
+
+          if($state.current.name == "app.pokeLocations") {
+            $log.debug("Viewing a Pokemon, reload with selected Generation");
+            var tempPoke = StateTracker.getCurrentPoke();
+            $log.debug("tempPoke: ", tempPoke);
+            var testPoke = PokeFetch.getPoke(tempPoke.nationalDex, tempPoke.name, tempPoke.form, StateTracker.getGen());
+            $log.debug("testPoke: ", testPoke);
+
+            //Choosing something invalid can return an "undefined" poke
+            if(testPoke) {
+              StateTracker.setCurrentPoke(testPoke);
+              $state.go("app.pokeLocations",null,{reload: true});
+            }else {
+              $log.debug("Invalid Pokemon chosen, warn the user");
               $cordovaToast.showLongCenter("This Pokemon doesn't exist in the game you've chosen. Please choose another game, or a different Pokemon!");
             }
           }
@@ -239,14 +298,15 @@ angular.module('seiiDex.controllers', [])
 .controller('WelcomeCtrl', [
   '$scope',
   '$stateParams',
-  function($scope, $stateParams) {
+  'SeiiDexVersion',
+  function($scope, $stateParams, SeiiDexVersion) {
     var welcome = this;
 
-    welcome.viewTitle = "SeiiDex - v0.1";
+    welcome.viewTitle = "SeiiDex - v" + SeiiDexVersion;
 
     welcome.cardGroup = [
       {title: "Welcome!", contents: ["This is the SeiiDex, where you can find information on all 751 current Pokemon. The SeiiDex is completely local to your device, with no internet connectivity required."], show: false},
-      {title: "How do I use it?", contents: ["Tap the button at the bottom of the screen, then pick the group of Pokemon games that you're looking for information about. From there, just browse or search to find whatever you need!"], show: false},
+      {title: "How do I use it?", contents: ["Tap the button at the bottom of the screen, then pick the group of Pokemon games that you're looking for information about. You can then browse or search the list (note: search also looks for pre-evolutions!) for the Pokemon you want information about."], show: false},
       {title: "What games are supported?", contents: ['This app uses outside database info (see the Credits) to display all games up through X/Y. ORAS isn\'t fully supported yet, so some things like "Wild Encounters" will be blank for ORAS.'], show: false},
       {title: "Credits", contents: ['"Veekun" (https://github.com/veekun/pokedex), whose data is the underpinnings of this entire application.'], show: false}
     ];
@@ -279,25 +339,28 @@ angular.module('seiiDex.controllers', [])
 
     gen.data;
     gen.dataAsArray;
+    gen.searchQuery;
+
     gen.thisGen = StateTracker.getGen();
     gen.thisGame = StateTracker.getGame();
-    //$log.log("Initial generation: ", gen.thisGen);
+    $log.debug("Initial generation: ", gen.thisGen);
+
     gen.goToPoke = goToPoke;
 
     $scope.$on('$ionicView.enter', function(e) {
       gen.thisGen = StateTracker.getGen();
-      //$log.log("Selected generation: ", gen.thisGen);
-      //$log.log("Fetching data for Generation " + gen.thisGen);
+      $log.debug("Selected generation: ", gen.thisGen);
+      $log.debug("Fetching data for Generation " + gen.thisGen);
       gen.thisGame = StateTracker.getGame();
-      //$log.log("Selected game: ", gen.thisGame);
+      $log.debug("Selected game: ", gen.thisGame);
       gen.data = PokeFetch.getPokeList(gen.thisGen);
-      //$log.log("genData: ", gen.data);
+      $log.debug("genData: ", gen.data);
       gen.dataAsArray = PokeFetch.listToArray(gen.data);
-      //$log.log("genDataAsArray: ", gen.dataAsArray);
+      $log.debug("genDataAsArray: ", gen.dataAsArray);
     });
 
     function goToPoke(number, name, form) {
-      //$log.log("Number: ", number, "Name: ", name, "Form: ", form);
+      $log.debug("Number: ", number, "Name: ", name, "Form: ", form);
       var thisPoke = PokeFetch.getPoke(number, name, form, StateTracker.getGen());
       StateTracker.setCurrentPoke(thisPoke);
       $state.go("app.singlePoke");
@@ -324,7 +387,7 @@ angular.module('seiiDex.controllers', [])
     sp.breedingHeader = "Breeding";
     sp.evHeader = "Effort Values";
     sp.movesHeader = "Moves";
-    sp.locationsHeader = "Wild Encounters";
+    sp.locationsHeader = "Wild Encounter Locations";
 
     sp.showGeneral = false;
     sp.showAbilities = false;
@@ -343,7 +406,7 @@ angular.module('seiiDex.controllers', [])
 
     $scope.$on('$ionicView.enter', function(e) {
       sp.data = StateTracker.getCurrentPoke();
-      //$log.log("Current Pokemon is: ", sp.data);
+      $log.debug("Current Pokemon is: ", sp.data);
       sp.thisGen = StateTracker.getGen();
     });
 
@@ -419,7 +482,7 @@ angular.module('seiiDex.controllers', [])
     mv.shownSubGroup;
     mv.transformedMoves;
 
-    mv.movesHeader = "Moves";
+    mv.movesHeader = "Movesets";
     mv.moveTypeArray = [];
     mv.levelUpMoves = "levelUpMoves";
     mv.machineMoves = "machineMoves";
@@ -437,12 +500,23 @@ angular.module('seiiDex.controllers', [])
 
     $scope.$on('$ionicView.enter', function(e) {
       mv.data = StateTracker.getCurrentPoke();
-      //$log.log("Current Pokemon is: ", sp.data);
+
+      /*
+      * Transforming "mv.data" directly would alter the JSON data which backs it
+      *  until the application is completely restarted. To preserve the JSON
+      *  data and alter it only as needed, use a "shadow" copy of "mv.data"
+      *  that is copied fresh from the JSON data each time transformation is
+      *  required.
+      */
+      mv.shadowData = JSON.parse(JSON.stringify(mv.data));
+
+      $log.debug("Current Pokemon is: ", mv.data);
+      $log.debug("Current shadow is: ", mv.shadowData);
       mv.thisGen = StateTracker.getGen();
       mv.thisGame = StateTracker.getGame();
-      mv.transformedMoves = mv.narrowMovesToThisGame(mv.data.moves);
+      mv.transformedMoves = mv.narrowMovesToThisGame(mv.shadowData.moves);
       mv.transformedMoves = mv.transformMoveData(mv.transformedMoves);
-      $log.log("transformedMoves: ", mv.transformedMoves);
+      $log.debug("transformedMoves: ", mv.transformedMoves);
     });
 
     /*
@@ -475,7 +549,7 @@ angular.module('seiiDex.controllers', [])
     };
 
     function parseMoveType(moveType) {
-      //$log.log("Move type:", moveType);
+      $log.debug("Move type:", moveType);
       if (moveType == mv.levelUpMoves) {
         return 'Learned From Leveling';
       }else if (moveType == mv.machineMoves) {
@@ -490,15 +564,15 @@ angular.module('seiiDex.controllers', [])
     }
 
     function narrowMovesToThisGame(moveData) {
-      //$log.log("narrowMovesToThisGame data: ", moveData);
+      $log.debug("narrowMovesToThisGame data: ", moveData);
 
       var relevantGame = {};
 
       var thisGame = StateTracker.getGame();
-      $log.log("thisGame: ", thisGame);
+      $log.debug("thisGame: ", thisGame);
 
       angular.forEach(moveData, function(value, key) {
-        $log.log("key: ", key);
+        $log.debug("key: ", key);
 
         //Match exactly or partially
         if(thisGame == key || ~thisGame.indexOf(key)) {
@@ -506,18 +580,18 @@ angular.module('seiiDex.controllers', [])
         }
       });
 
-      //$log.log("final narrowed data: ", relevantGame);
+      $log.debug("final narrowed data: ", relevantGame);
 
       return relevantGame;
     }
 
     function transformMoveData(moveData) {
-      //$log.log("transformMoveData start: ", moveData);
+      $log.debug("transformMoveData start: ", moveData);
 
       var modMoveData = {};
 
       angular.forEach(moveData, function(gameValue, gameKey) {
-        //$log.log("moveData: ", gameKey, gameValue);
+        $log.debug("moveData: ", gameKey, gameValue);
 
         var gameName = gameKey;
         modMoveData[gameName] = {};
@@ -559,7 +633,7 @@ angular.module('seiiDex.controllers', [])
         });
       });
 
-      //$log.log("transformMoveData end: ", modMoveData);
+      $log.debug("transformMoveData end: ", modMoveData);
 
       return modMoveData;
     }
@@ -579,21 +653,31 @@ angular.module('seiiDex.controllers', [])
     var loc = this;
 
     loc.data;
+    loc.transformedLocations;
+    loc.requestedData;
 
     loc.shownGroup;
     loc.shownSubGroup;
 
-    loc.locationsHeader = "Wild Encounters";
+    loc.locationsHeader = "Wild Encounter Locations";
 
     loc.toggleGroup = toggleGroup;
     loc.isGroupShown = isGroupShown;
     loc.toggleSubGroup = toggleSubGroup;
     loc.isSubGroupShown = isSubGroupShown;
+    loc.isEmptyObject = isEmptyObject;
+    loc.narrowMachinesToThisGame = narrowMachinesToThisGame;
+    loc.whichDataRequested = whichDataRequested;
+    loc.getObjKeys = getObjKeys;
 
     $scope.$on('$ionicView.enter', function(e) {
       loc.data = StateTracker.getCurrentPoke();
-      //$log.log("Current Pokemon is: ", sp.data);
+      $log.debug("Current Pokemon is: ", loc.data);
       loc.thisGen = StateTracker.getGen();
+      loc.transformedLocations = loc.narrowMachinesToThisGame(loc.data.locations);
+      $log.log("transformedLocations: ", loc.transformedLocations);
+      loc.requestedData = loc.whichDataRequested();
+      $log.log("requestedData: ", loc.requestedData);
     });
 
     /*
@@ -624,5 +708,49 @@ angular.module('seiiDex.controllers', [])
     function isSubGroupShown(group) {
       return loc.shownSubGroup === group;
     };
+
+    function isEmptyObject(testObj) {
+      return angular.equals({}, testObj);
+    }
+
+    function narrowMachinesToThisGame(machineData) {
+      $log.debug("narrowMachinesToThisGame data: ", machineData);
+
+      var relevantGame = {};
+
+      var thisGame = StateTracker.getGame();
+      $log.debug("thisGame: ", thisGame);
+
+      angular.forEach(machineData, function(value, key) {
+        $log.debug("key: ", key);
+
+        //Match exactly or partially
+        if(thisGame == key || ~thisGame.indexOf(key)) {
+          relevantGame[key] = value;
+        }
+      });
+
+      $log.debug("final narrowed data: ", relevantGame);
+
+      return relevantGame;
+    }
+
+    function whichDataRequested() {
+      if(StateTracker.getGame() == "Omega Ruby/Alpha Sapphire") {
+        return "ORAS";
+      }else if(loc.isEmptyObject(loc.transformedLocations)) {
+        return "Missing";
+      }else {
+        return "OK";
+      }
+    }
+
+    function getObjKeys(obj) {
+      if (!obj) {
+        return [];
+      }
+      $log.log("thekeys: ", obj, Object.keys(obj));
+      return Object.keys(obj);
+    }
   }
 ]);

@@ -4,24 +4,26 @@
       <ion-item class="item-divider loud">
         {{locCtrl.locationsHeader}}
       </ion-item>
-      <!-- TODO: "Prettify" by copy/pasting styling from "pokeMoves.html" -->
       <!-- TODO: Add filtering so that only the selected games are shown -->
-      <div ng-repeat="(singleGame, unusedVal) in locCtrl.data.locations">
-        <ion-item class="item-divider item-text-wrap" ng-if="mvCtrl.isEmptyObject(mvCtrl.transformedMoves[gameGen])">
-          No wild encounter locations were found for this Pokemon in this game.<br />
-          Generally this means that the Pokemon is available through some other means, such as trading, breeding, or special events.
-        </ion-item>
+      <ion-item class="item-divider item-text-wrap" ng-if="locCtrl.requestedData == 'Missing'">
+        No wild encounter locations were found for this Pokemon in this game.<br /><br />
+        Generally this means that the Pokemon is available through some other means, such as trading, breeding, or special events.
+      </ion-item>
+      <ion-item class="item-divider item-text-wrap" ng-if="locCtrl.requestedData == 'ORAS'">
+        Wild Encounter Locations are not yet available for Pokemon in Omega Ruby or Alpha Sapphire. Please check back later!
+      </ion-item>
+      <div ng-repeat="(singleGame, unusedVal) in locCtrl.transformedLocations" ng-if="locCtrl.requestedData == 'OK'">
         <ion-item class="item-divider" ng-click="locCtrl.toggleGroup(singleGame)" ng-class="{active: locCtrl.isGroupShown(singleGame)}">
           <i class="icon" ng-class="locCtrl.isGroupShown(singleGame) ? 'ion-minus' : 'ion-plus'"></i>
           {{singleGame}}
         </ion-item>
-        <ion-item ng-repeat="(locationName, locationContent) in locCtrl.data.locations[singleGame]" class="item-accordion" ng-show="locCtrl.isGroupShown(singleGame)">
-          <ion-item class="item-divider item-text-wrap no-side-borders" ng-click="locCtrl.toggleSubGroup(locationName)" ng-class="{active: locCtrl.isSubGroupShown(locationName)}">
-            <i class="icon" ng-class="locCtrl.isSubGroupShown(locationName) ? 'ion-minus' : 'ion-plus'"></i>
-            {{locationName}}
+        <ion-item ng-repeat="test in locCtrl.transformedLocations[singleGame] | toArray | naturalSort" class="item-accordion" ng-show="locCtrl.isGroupShown(singleGame)">
+          <ion-item class="item-divider item-text-wrap no-side-borders" ng-click="locCtrl.toggleSubGroup(test.$key)" ng-class="{active: locCtrl.isSubGroupShown(test.$key)}">
+            <i class="icon" ng-class="locCtrl.isSubGroupShown(test.$key) ? 'ion-minus' : 'ion-plus'"></i>
+            {{test.$key}}
           </ion-item>
-          <ion-item ng-repeat="(encounterMethod, encounterChance) in locCtrl.data.locations[singleGame][locationName]" class="item-accordion item-text-wrap no-side-borders" ng-show="locCtrl.isSubGroupShown(locationName)">
-            {{encounterMethod}}: {{encounterChance}} chance of encounter
+          <ion-item ng-repeat="(encounterMethod, encounterChance) in locCtrl.transformedLocations[singleGame][test.$key]" class="item-accordion item-text-wrap no-side-borders center-text add-vertical-padding" ng-show="locCtrl.isSubGroupShown(test.$key)">
+            <span class="loud">{{encounterMethod}}:</span><br />{{encounterChance}} chance of encounter
           </ion-item>
         </ion-item>
       </div>
