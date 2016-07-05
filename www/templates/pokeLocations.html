@@ -1,8 +1,9 @@
-<ion-view view-title="{{locCtrl.data.nationalDex}} - {{locCtrl.data.name}}">
+<ion-view view-title="{{locCtrl.viewTitle}}">
+  <ion-nav-title>{{locCtrl.viewTitle}}</ion-nav-title>
   <ion-content>
     <ion-list>
       <ion-item class="item-divider loud">
-        {{locCtrl.locationsHeader}}
+        {{::locCtrl.locationsHeader}}
       </ion-item>
       <!-- TODO: Add filtering so that only the selected games are shown -->
       <ion-item class="item-divider item-text-wrap" ng-if="locCtrl.requestedData == 'Missing'">
@@ -17,12 +18,12 @@
           <i class="icon" ng-class="locCtrl.isGroupShown(singleGame) ? 'ion-minus' : 'ion-plus'"></i>
           {{singleGame}}
         </ion-item>
-        <ion-item ng-repeat="test in locCtrl.transformedLocations[singleGame] | toArray | naturalSort" class="item-accordion" ng-show="locCtrl.isGroupShown(singleGame)">
-          <ion-item class="item-divider item-text-wrap no-side-borders" ng-click="locCtrl.toggleSubGroup(test.$key)" ng-class="{active: locCtrl.isSubGroupShown(test.$key)}">
-            <i class="icon" ng-class="locCtrl.isSubGroupShown(test.$key) ? 'ion-minus' : 'ion-plus'"></i>
-            {{test.$key}}
+        <ion-item ng-repeat="encounterLocation in locCtrl.transformedLocations[singleGame] | toArray | naturalSort" class="item-accordion" ng-show="locCtrl.isGroupShown(singleGame)">
+          <ion-item class="item-divider item-text-wrap no-side-borders" ng-click="locCtrl.toggleSubGroup(encounterLocation.$key)" ng-class="{active: locCtrl.isSubGroupShown(encounterLocation.$key)}">
+            <i class="icon" ng-class="locCtrl.isSubGroupShown(encounterLocation.$key) ? 'ion-minus' : 'ion-plus'"></i>
+            {{encounterLocation.$key}}
           </ion-item>
-          <ion-item ng-repeat="(encounterMethod, encounterChance) in locCtrl.transformedLocations[singleGame][test.$key]" class="item-accordion item-text-wrap no-side-borders center-text add-vertical-padding" ng-show="locCtrl.isSubGroupShown(test.$key)">
+          <ion-item ng-repeat="(encounterMethod, encounterChance) in locCtrl.transformedLocations[singleGame][encounterLocation.$key]" class="item-accordion item-text-wrap no-side-borders center-text add-vertical-padding" ng-show="locCtrl.isSubGroupShown(encounterLocation.$key)">
             <span class="loud">{{encounterMethod}}:</span><br />{{encounterChance}} chance of encounter
           </ion-item>
         </ion-item>

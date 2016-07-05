@@ -1,8 +1,9 @@
-<ion-view view-title="{{mvCtrl.data.nationalDex}} - {{mvCtrl.data.name}}">
+<ion-view view-title="{{mvCtrl.viewTitle}}">
+  <ion-nav-title>{{mvCtrl.viewTitle}}</ion-nav-title>
   <ion-content>
     <ion-list>
       <ion-item class="item-divider loud">
-        {{mvCtrl.movesHeader}}
+        {{::mvCtrl.movesHeader}}
       </ion-item>
       <div ng-repeat="(gameGen, unusedVal) in mvCtrl.transformedMoves">
         <ion-item class="item-divider item-text-wrap" ng-if="mvCtrl.isEmptyObject(mvCtrl.transformedMoves[gameGen])">

@@ -1,5 +1,5 @@
 "use strict";
-angular.module('seiiDex.controllers', [])
+angular.module('seiiDex.controllers', ['ionic'])
 
 .controller('LoadScreenCtrl', [
   '$scope',
@@ -188,11 +188,11 @@ angular.module('seiiDex.controllers', [])
         },
         cssClass: "game-actionsheet",
         buttonClicked: function(index) {
-          $log.debug("Button clicked: ", index);
+          $log.log("Button clicked: ", index);
           StateTracker.setGen(app.parseButtons(index));
-          $log.debug("Setting generation: ", StateTracker.getGen());
+          $log.log("Setting generation: ", StateTracker.getGen());
           StateTracker.setGame(index);
-          $log.debug("Setting game: ", StateTracker.getGame());
+          $log.log("Setting game: ", StateTracker.getGame());
 
           if($state.current.name == "app.welcome") {
             $log.debug("On Welcome screen, move to Generation screen");
@@ -306,8 +306,8 @@ angular.module('seiiDex.controllers', [])
 
     welcome.cardGroup = [
       {title: "Welcome!", contents: ["This is the SeiiDex, where you can find information on all 751 current Pokemon. The SeiiDex is completely local to your device, with no internet connectivity required."], show: false},
-      {title: "How do I use it?", contents: ["Tap the button at the bottom of the screen, then pick the group of Pokemon games that you're looking for information about. You can then browse or search the list (note: search also looks for pre-evolutions!) for the Pokemon you want information about."], show: false},
-      {title: "What games are supported?", contents: ['This app uses outside database info (see the Credits) to display all games up through X/Y. ORAS isn\'t fully supported yet, so some things like "Wild Encounters" will be blank for ORAS.'], show: false},
+      {title: "How do I use it?", contents: ["Tap the button at the bottom of the screen, then pick the group of Pokemon games that you're looking for information about. You can then browse or search the list for the Pokemon you want information about."], show: false},
+      {title: "What games are supported?", contents: ['This app uses outside database info (see the Credits) to display all games up through ORAS. Information for ORAS is only partially complete, so some things like "Wild Encounters" will be blank for ORAS.'], show: false},
       {title: "Credits", contents: ['"Veekun" (https://github.com/veekun/pokedex), whose data is the underpinnings of this entire application.'], show: false}
     ];
 
@@ -346,8 +346,9 @@ angular.module('seiiDex.controllers', [])
     $log.debug("Initial generation: ", gen.thisGen);
 
     gen.goToPoke = goToPoke;
+    gen.performSearch = performSearch;
 
-    $scope.$on('$ionicView.enter', function(e) {
+    $scope.$on('$ionicView.beforeEnter', function(e) {
       gen.thisGen = StateTracker.getGen();
       $log.debug("Selected generation: ", gen.thisGen);
       $log.debug("Fetching data for Generation " + gen.thisGen);
@@ -357,14 +358,31 @@ angular.module('seiiDex.controllers', [])
       $log.debug("genData: ", gen.data);
       gen.dataAsArray = PokeFetch.listToArray(gen.data);
       $log.debug("genDataAsArray: ", gen.dataAsArray);
+      gen.searchQuery = "";
     });
 
     function goToPoke(number, name, form) {
       $log.debug("Number: ", number, "Name: ", name, "Form: ", form);
       var thisPoke = PokeFetch.getPoke(number, name, form, StateTracker.getGen());
       StateTracker.setCurrentPoke(thisPoke);
-      $state.go("app.singlePoke");
+      $state.go("app.singlePoke", {pokeName: thisPoke.name, pokeNumber: thisPoke.nationalDex, pokeGame: gen.thisGame});
     };
+
+    function performSearch(item) {
+      //If nothing's been typed, show the whole list
+      if(!gen.searchQuery || gen.searchQuery == "") {
+        return true;
+      }
+
+      var idPlusName = item.nationalDex + " - " + item.name;
+
+      if(idPlusName.toLowerCase() == gen.searchQuery.toLowerCase() || ~idPlusName.toLowerCase().indexOf(gen.searchQuery.toLowerCase())) {
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
   }
 ])
 
@@ -379,6 +397,10 @@ angular.module('seiiDex.controllers', [])
 
     sp.data;
     sp.thisGen;
+    sp.thisGame;
+    sp.viewTitle;
+    sp.currentPokeName;
+    sp.currentPokeNumber;
 
     sp.generalHeader = "General";
     sp.abilitiesHeader = "Abilities";
@@ -404,10 +426,12 @@ angular.module('seiiDex.controllers', [])
     sp.hideAll = hideAll;
     sp.goToMoves = goToMoves;
 
-    $scope.$on('$ionicView.enter', function(e) {
+    $scope.$on('$ionicView.beforeEnter', function(e) {
+      sp.viewTitle = "#" + StateTracker.getCurrentPokeNumber() + " - " + StateTracker.getCurrentPokeName() + " - " + StateTracker.getShortGame();
       sp.data = StateTracker.getCurrentPoke();
       $log.debug("Current Pokemon is: ", sp.data);
       sp.thisGen = StateTracker.getGen();
+      sp.thisGame = StateTracker.getGame();
     });
 
     /*
@@ -478,6 +502,7 @@ angular.module('seiiDex.controllers', [])
     var mv = this;
 
     mv.data;
+    mv.viewTitle;
     mv.shownGroup;
     mv.shownSubGroup;
     mv.transformedMoves;
@@ -498,7 +523,8 @@ angular.module('seiiDex.controllers', [])
     mv.transformMoveData = transformMoveData;
     mv.isEmptyObject = isEmptyObject;
 
-    $scope.$on('$ionicView.enter', function(e) {
+    $scope.$on('$ionicView.beforeEnter', function(e) {
+      mv.viewTitle = "#" + StateTracker.getCurrentPokeNumber() + " - " + StateTracker.getCurrentPokeName() + " - " + StateTracker.getShortGame();
       mv.data = StateTracker.getCurrentPoke();
 
       /*
@@ -653,6 +679,7 @@ angular.module('seiiDex.controllers', [])
     var loc = this;
 
     loc.data;
+    loc.viewTitle;
     loc.transformedLocations;
     loc.requestedData;
 
@@ -670,7 +697,8 @@ angular.module('seiiDex.controllers', [])
     loc.whichDataRequested = whichDataRequested;
     loc.getObjKeys = getObjKeys;
 
-    $scope.$on('$ionicView.enter', function(e) {
+    $scope.$on('$ionicView.beforeEnter', function(e) {
+      loc.viewTitle = "#" + StateTracker.getCurrentPokeNumber() + " - " + StateTracker.getCurrentPokeName() + " - " + StateTracker.getShortGame();
       loc.data = StateTracker.getCurrentPoke();
       $log.debug("Current Pokemon is: ", loc.data);
       loc.thisGen = StateTracker.getGen();

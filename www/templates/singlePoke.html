@@ -1,57 +1,58 @@
-<ion-view view-title="{{spCtrl.data.nationalDex}} - {{spCtrl.data.name}}">
+<ion-view view-title="{{spCtrl.viewTitle}}">
+  <ion-nav-title>{{spCtrl.viewTitle}}</ion-nav-title>
   <ion-content>
     <!-- GENERAL -->
     <div class="card">
       <div class="item item-text-wrap loud" ng-click="spCtrl.toggleGroup('general')" ng-class="{active: spCtrl.showGeneral}">
         <i class="icon" ng-class="spCtrl.showGeneral ? 'ion-chevron-down' : 'ion-chevron-right'"></i>
-        {{spCtrl.generalHeader}}
+        {{::spCtrl.generalHeader}}
       </div>
       <div class="item item-text-wrap item-accordion" ng-show="spCtrl.showGeneral">
-        <div>National Dex ID: {{spCtrl.data.nationalDex}}</div>
-        <div>Name: {{spCtrl.data.name}}</div>
-        <div ng-if="spCtrl.data.types.type2">Types: {{spCtrl.data.types.type1}} / {{spCtrl.data.types.type2}}</div>
-        <div ng-if="spCtrl.data.types.type2 == null">Type: {{spCtrl.data.types.type1}}</div>
-        <div ng-if="spCtrl.data.form != 'None'">Form: {{spCtrl.data.form}}</div>
+        <div><span class="loud">National Dex ID:</span> {{::spCtrl.data.nationalDex}}</div>
+        <div><span class="loud">Name:</span> {{::spCtrl.data.name}}</div>
+        <div ng-if="spCtrl.data.types.type2"><span class="loud">Types:</span> {{::spCtrl.data.types.type1}} / {{::spCtrl.data.types.type2}}</div>
+        <div ng-if="spCtrl.data.types.type2 == null"><span class="loud">Type:</span> {{::spCtrl.data.types.type1}}</div>
+        <div ng-if="spCtrl.data.form != 'None'"><span class="loud">Form:</span> {{::spCtrl.data.form}}</div>
       </div>
     </div>
     <!-- ABILITIES -->
     <div ng-if="spCtrl.data.abilities" class="card">
       <div class="item item-text-wrap loud" ng-click="spCtrl.toggleGroup('abilities')" ng-class="{active: spCtrl.showAbilities}">
         <i class="icon" ng-class="spCtrl.showAbilities ? 'ion-chevron-down' : 'ion-chevron-right'"></i>
-        {{spCtrl.abilitiesHeader}}
+        {{::spCtrl.abilitiesHeader}}
       </div>
       <div class="item item-text-wrap item-accordion" ng-show="spCtrl.showAbilities">
-        <div>Ability 1: {{spCtrl.data.abilities.ability1}}</div>
-        <div ng-if="spCtrl.data.abilities.ability2">Ability 2: {{spCtrl.data.abilities.ability2}}</div>
-        <div ng-if="spCtrl.data.abilities.abilityHidden">Hidden Ability: {{spCtrl.data.abilities.abilityHidden}}</div>
+        <div><span class="loud">Ability 1:</span> {{spCtrl.data.abilities.ability1}}</div>
+        <div ng-if="spCtrl.data.abilities.ability2"><span class="loud">Ability 2:</span> {{spCtrl.data.abilities.ability2}}</div>
+        <div ng-if="spCtrl.data.abilities.abilityHidden"><span class="loud">Hidden Ability:</span> {{spCtrl.data.abilities.abilityHidden}}</div>
       </div>
     </div>
     <!-- EVOLUTION -->
     <div ng-if="spCtrl.data.evolution.length > 0" class="card">
       <div class="item item-text-wrap loud" ng-click="spCtrl.toggleGroup('evolution')" ng-class="{active: spCtrl.showEvolution}">
         <i class="icon" ng-class="spCtrl.showEvolution ? 'ion-chevron-down' : 'ion-chevron-right'"></i>
-        {{spCtrl.evolutionHeader}}
+        {{::spCtrl.evolutionHeader}}
       </div>
       <div ng-repeat="evo in spCtrl.data.evolution" class="item item-text-wrap item-accordion" ng-show="spCtrl.showEvolution">
-        <div>Method: {{evo.methodExplanation}}</div>
-        <div>Evolves Into: {{evo.nationalDex}} - {{evo.name}}</div>
+        <div><span class="loud">Method:</span> {{evo.methodExplanation}}</div>
+        <div><span class="loud">Evolves Into:</span> {{evo.nationalDex}} - {{evo.name}}</div>
       </div>
     </div>
     <!-- BREEDING -->
     <div ng-if="spCtrl.data.breeding" class="card">
       <div class="item item-text-wrap loud" ng-click="spCtrl.toggleGroup('breeding')" ng-class="{active: spCtrl.showBreeding}">
         <i class="icon" ng-class="spCtrl.showBreeding ? 'ion-chevron-down' : 'ion-chevron-right'"></i>
-        {{spCtrl.breedingHeader}}
+        {{::spCtrl.breedingHeader}}
       </div>
       <div class="item item-text-wrap item-accordion" ng-show="spCtrl.showBreeding">
-        <div>Base Steps To Hatch: {{spCtrl.data.breeding.baseSteps}}</div>
+        <div><span class="loud">Base Steps To Hatch:</span> {{spCtrl.data.breeding.baseSteps}}</div>
         <div ng-if="spCtrl.data.breeding.eggGroups.length > 1">
-          Egg Group 1: {{spCtrl.data.breeding.eggGroups[0]}}
+          <span class="loud">Egg Group 1:</span> {{spCtrl.data.breeding.eggGroups[0]}}
           <br />
-          Egg Group 2: {{spCtrl.data.breeding.eggGroups[1]}}
+          <span class="loud">Egg Group 2:</span> {{spCtrl.data.breeding.eggGroups[1]}}
         </div>
         <div ng-if="spCtrl.data.breeding.eggGroups.length == 1">
-          Egg Group 1: {{spCtrl.data.breeding.eggGroups[0]}}
+          <span class="loud">Egg Group 1:</span> {{spCtrl.data.breeding.eggGroups[0]}}
         </div>
       </div>
     </div>
@@ -59,65 +60,65 @@
     <div class="card">
       <div class="item item-text-wrap loud" ng-click="spCtrl.toggleGroup('stats')" ng-class="{active: spCtrl.showStats}">
         <i class="icon" ng-class="spCtrl.showStats ? 'ion-chevron-down' : 'ion-chevron-right'"></i>
-        {{spCtrl.statsHeader}}
+        {{::spCtrl.statsHeader}}
       </div>
       <div ng-if="spCtrl.thisGen == 1" class="item item-text-wrap item-accordion" ng-show="spCtrl.showStats">
-        <div>HP: {{spCtrl.data.stats.hp}}</div>
-        <div>Attack: {{spCtrl.data.stats.attack}}</div>
-        <div>Defense: {{spCtrl.data.stats.defense}}</div>
-        <div>Special: {{spCtrl.data.stats.specialAttack}}</div>
-        <div>Speed: {{spCtrl.data.stats.speed}}</div>
+        <div><span class="loud">HP:</span> {{spCtrl.data.stats.hp}}</div>
+        <div><span class="loud">Attack:</span> {{spCtrl.data.stats.attack}}</div>
+        <div><span class="loud">Defense:</span> {{spCtrl.data.stats.defense}}</div>
+        <div><span class="loud">Special:</span> {{spCtrl.data.stats.specialAttack}}</div>
+        <div><span class="loud">Speed:</span> {{spCtrl.data.stats.speed}}</div>
       </div>
       <div ng-if="spCtrl.thisGen > 1" class="item item-text-wrap item-accordion" ng-show="spCtrl.showStats">
-        <div>HP: {{spCtrl.data.stats.hp}}</div>
-        <div>Attack: {{spCtrl.data.stats.attack}}</div>
-        <div>Defense: {{spCtrl.data.stats.defense}}</div>
-        <div>Special Attack: {{spCtrl.data.stats.specialAttack}}</div>
-        <div>Special Defense: {{spCtrl.data.stats.specialDefense}}</div>
-        <div>Speed: {{spCtrl.data.stats.speed}}</div>
+        <div><span class="loud">HP:</span> {{spCtrl.data.stats.hp}}</div>
+        <div><span class="loud">Attack:</span> {{spCtrl.data.stats.attack}}</div>
+        <div><span class="loud">Defense:</span> {{spCtrl.data.stats.defense}}</div>
+        <div><span class="loud">Special Attack:</span> {{spCtrl.data.stats.specialAttack}}</div>
+        <div><span class="loud">Special Defense:</span> {{spCtrl.data.stats.specialDefense}}</div>
+        <div><span class="loud">Speed:</span> {{spCtrl.data.stats.speed}}</div>
       </div>
     </div>
     <!-- EFFORT VALUES -->
     <div class="card">
       <div class="item item-text-wrap loud" ng-click="spCtrl.toggleGroup('ev')" ng-class="{active: spCtrl.showEV}">
         <i class="icon" ng-class="spCtrl.showEV ? 'ion-chevron-down' : 'ion-chevron-right'"></i>
-        {{spCtrl.evHeader}}
+        {{::spCtrl.evHeader}}
       </div>
       <div ng-if="spCtrl.data.effortValues.hp" class="item item-text-wrap item-accordion" ng-show="spCtrl.showEV">
-        HP: {{spCtrl.data.effortValues.hp}}
+        <span class="loud">HP:</span> {{spCtrl.data.effortValues.hp}}
       </div>
       <div ng-if="spCtrl.data.effortValues.attack" class="item item-text-wrap item-accordion" ng-show="spCtrl.showEV">
-        Attack: {{spCtrl.data.effortValues.attack}}
+        <span class="loud">Attack:</span> {{spCtrl.data.effortValues.attack}}
       </div>
       <div ng-if="spCtrl.data.effortValues.defense" class="item item-text-wrap item-accordion" ng-show="spCtrl.showEV">
-        Defense: {{spCtrl.data.effortValues.defense}}
+        <span class="loud">Defense:</span> {{spCtrl.data.effortValues.defense}}
       </div>
-      <div ng-if="spCtrl.thisGen > 1 &&spCtrl.data.effortValues.specialAttack" class="item item-text-wrap item-accordion" ng-show="spCtrl.showEV">
-        Special Attack: {{spCtrl.data.effortValues.specialAttack}}
+      <div ng-if="spCtrl.thisGen > 1 && spCtrl.data.effortValues.specialAttack" class="item item-text-wrap item-accordion" ng-show="spCtrl.showEV">
+        <span class="loud">Special Attack:</span> {{spCtrl.data.effortValues.specialAttack}}
       </div>
       <div ng-if="spCtrl.thisGen > 1 && spCtrl.data.effortValues.specialDefense" class="item item-text-wrap item-accordion" ng-show="spCtrl.showEV">
-        Special Defense: {{spCtrl.data.effortValues.specialDefense}}
+        <span class="loud">Special Defense:</span> {{spCtrl.data.effortValues.specialDefense}}
       </div>
       <div ng-if="spCtrl.data.effortValues.speed" class="item item-text-wrap item-accordion" ng-show="spCtrl.showEV">
-        Speed: {{spCtrl.data.effortValues.speed}}
+        <span class="loud">Speed:</span> {{spCtrl.data.effortValues.speed}}
       </div>
       <div ng-if="spCtrl.thisGen == 1 && spCtrl.data.effortValues.specialAttack" class="item item-text-wrap item-accordion" ng-show="spCtrl.showEV">
-        Special: {{spCtrl.data.effortValues.specialAttack}}
+        <span class="loud">Special:</span> {{spCtrl.data.effortValues.specialAttack}}
       </div>
       <div ng-if="spCtrl.thisGen == 1 && spCtrl.data.effortValues.specialDefense" class="item item-text-wrap item-accordion" ng-show="spCtrl.showEV">
-        Special: {{spCtrl.data.effortValues.specialDefense}}
+        <span class="loud">Special:</span> {{spCtrl.data.effortValues.specialDefense}}
       </div>
     </div>
     <!-- MOVES -->
     <div class="card">
-      <div class="item item-text-wrap loud icon-right ion-chevron-right" ui-sref="app.pokeMoves">
-        {{spCtrl.movesHeader}}
+      <div class="item item-text-wrap loud icon-right ion-chevron-right" ui-sref="app.pokeMoves({pokeName: spCtrl.data.name, pokeNumber: spCtrl.data.nationalDex, pokeGame: spCtrl.thisGame})">
+        {{::spCtrl.movesHeader}}
       </div>
     </div>
     <!-- WILD ENCOUNTERS -->
     <div class="card">
-      <div class="item item-text-wrap loud icon-right ion-chevron-right" ui-sref="app.pokeLocations">
-        {{spCtrl.locationsHeader}}
+      <div class="item item-text-wrap loud icon-right ion-chevron-right" ui-sref="app.pokeLocations({pokeName: spCtrl.data.name, pokeNumber: spCtrl.data.nationalDex, pokeGame: spCtrl.thisGame})">
+        {{::spCtrl.locationsHeader}}
       </div>
     </div>
   </ion-content>
