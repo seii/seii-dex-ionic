@@ -184,7 +184,8 @@ angular.module('seiiDex.services', [])
 
     st.currentGen;
     st.currentGame;
-    st.currenPoke;
+    st.currentShortGame;
+    st.currentPoke;
 
     st.gameList = [
       "Red/Blue/Yellow",
@@ -199,6 +200,19 @@ angular.module('seiiDex.services', [])
       "Omega Ruby/Alpha Sapphire"
     ];
 
+    st.shortGameList = [
+      "R/B/Y",
+      "G/S/C",
+      "R/S/E",
+      "FR/LG",
+      "D/P/P",
+      "HG/SS",
+      "B/W",
+      "B2/W2",
+      "X/Y",
+      "ORAS"
+    ];
+
     return {
       getGen: function() {
         return st.currentGen;
@@ -211,6 +225,10 @@ angular.module('seiiDex.services', [])
       },
       setGame: function(data) {
         st.currentGame = st.gameList[data];
+        st.currentShortGame = st.shortGameList[data];
+      },
+      getShortGame: function() {
+        return st.currentShortGame;
       },
       getGameList: function() {
         return st.gameList;
@@ -220,6 +238,12 @@ angular.module('seiiDex.services', [])
       },
       setCurrentPoke: function(data) {
         st.currentPoke =  data;
+      },
+      getCurrentPokeName: function() {
+        return st.currentPoke.name;
+      },
+      getCurrentPokeNumber: function() {
+        return st.currentPoke.nationalDex;
       }
     }
   }

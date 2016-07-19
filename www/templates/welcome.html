@@ -1,14 +1,14 @@
-<ion-view view-title="{{welcomeCtrl.viewTitle}}" hide-back-button="true">
+<ion-view view-title="{{::welcomeCtrl.viewTitle}}" hide-back-button="true">
   <ion-content>
     <!-- Credit for collapsible card: Author of the CodePen at http://codepen.io/shengoo/pen/bNbvdO/ -->
-    <div ng-repeat="oneCard in welcomeCtrl.cardGroup">
+    <div ng-repeat="oneCard in ::welcomeCtrl.cardGroup">
       <div class="card">
         <div class="item item-text-wrap loud" ng-click="welcomeCtrl.toggleGroup(oneCard)" ng-class="{active: welcomeCtrl.isGroupShown(oneCard)}">
           <i class="icon" ng-class="welcomeCtrl.isGroupShown(oneCard) ? 'ion-chevron-down' : 'ion-chevron-right'"></i>
-          {{oneCard.title}}
+          {{::oneCard.title}}
         </div>
         <div class="item item-text-wrap item-accordion" ng-repeat="content in oneCard.contents" ng-show="welcomeCtrl.isGroupShown(oneCard)">
-          {{content}}
+          {{::content}}
         </div>
       </div>
     </div>

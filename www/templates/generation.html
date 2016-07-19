@@ -1,14 +1,18 @@
 <ion-view view-title="{{genCtrl.thisGame}}">
-  <ion-content>
+  <ion-nav-title>{{genCtrl.thisGame}}</ion-nav-title>
+  <div class="bar bar-subheader">
+    <!--<label class="item item-input">
+      <i class="icon ion-search placeholder-icon"></i>
+      <input type="search" placeholder="Search" ng-model="genCtrl.searchQuery">
+    </label>-->
+    <label class="item-input-wrapper search-subheader">
+      <i class="icon ion-search placeholder-icon"></i>
+      <input type="search" placeholder="Search" ng-model="genCtrl.searchQuery">
+    </label>
+  </div>
+  <ion-content class="has-subheader">
     <ion-list>
-      <!-- TODO: Add filter bar for search-as-you-go functionality -->
-      <ion-item>
-        <label class="item item-input">
-          <i class="icon ion-search placeholder-icon"></i>
-          <input type="text" placeholder="Search" ng-model="genCtrl.searchQuery">
-        </label>
-      </ion-item>
-      <ion-item collection-repeat="poke in genCtrl.dataAsArray | filter: genCtrl.searchQuery" ng-click="genCtrl.goToPoke(poke.nationalDex + '', poke.name + '', poke.form + '')">
+      <ion-item collection-repeat="poke in genCtrl.dataAsArray | filter: genCtrl.performSearch" ng-click="genCtrl.goToPoke(poke.nationalDex + '', poke.name + '', poke.form + '')">
         {{poke.nationalDex}} - {{poke.name}}
       </ion-item>
     </ion-list>
